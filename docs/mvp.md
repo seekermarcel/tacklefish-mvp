@@ -201,18 +201,18 @@ Creates fish sprites (10 species + color variants), UI mockups, pond background,
 
 - [ ] **Dev A:** Initialize Godot 4.x project with folder structure from Section 2
 - [ ] **Dev A:** Set up Godot MCP server connection for Claude Code assisted development
-- [ ] **Dev B:** Initialize Go module (`go mod init`), create folder structure from Section 2
-- [ ] **Dev B:** Write `001_init.sql` migration and DB init code with WAL mode
-- [ ] **Dev B:** Seed fish_species table with 10 MVP species
+- [x] **Dev B:** Initialize Go module (`go mod init`), create folder structure from Section 2
+- [x] **Dev B:** Write `001_init.sql` migration and DB init code with WAL mode
+- [x] **Dev B:** Seed fish_species table with 10 MVP species
 - [ ] **Designer:** Decide art style (propose 2-3 fish concepts for team vote)
 
 ### Phase 1 -- Auth & Skeleton (Day 3-5)
 
 Backend:
-- [ ] **Dev B:** Implement `POST /auth/register` -- accept device_id, create player, return JWT
-- [ ] **Dev B:** Implement `POST /auth/refresh` -- validate device_id, issue new JWT
-- [ ] **Dev B:** Implement JWT middleware for protected routes
-- [ ] **Dev B:** Add basic request logging and error handling
+- [x] **Dev B:** Implement `POST /auth/register` -- accept device_id, create player, return JWT
+- [x] **Dev B:** Implement `POST /auth/refresh` -- validate device_id, issue new JWT
+- [x] **Dev B:** Implement JWT middleware for protected routes
+- [x] **Dev B:** Add basic request logging and error handling
 
 Client:
 - [ ] **Dev A:** Create `auth.gd` autoload -- generate UUID on first launch, store in `user://`
@@ -237,16 +237,16 @@ Client (core mechanic -- this is the most important phase):
 - [ ] **Dev A:** Use Godot MCP + Claude Code to iterate on game feel (bar speed, zone size, timing windows)
 
 Backend:
-- [ ] **Dev B:** Implement `POST /fish/catch` -- full catch flow:
-  - [ ] Validate timing_score (0.0 - 1.0)
-  - [ ] Roll rarity tier based on score (better score = better odds)
-  - [ ] Select random species from rolled tier
-  - [ ] Check edition pool for remaining copies
-  - [ ] Assign random edition number from remaining pool
-  - [ ] Roll size and color traits
-  - [ ] Insert fish_instance and return full fish data
-- [ ] **Dev B:** Implement `GET /fish/pool` -- return remaining counts per species
-- [ ] **Dev B:** Write tests for catch logic (rarity distribution, pool depletion, edge cases)
+- [x] **Dev B:** Implement `POST /fish/catch` -- full catch flow:
+  - [x] Validate timing_score (0.0 - 1.0)
+  - [x] Roll rarity tier based on score (better score = better odds)
+  - [x] Select random species from rolled tier
+  - [x] Check edition pool for remaining copies
+  - [x] Assign random edition number from remaining pool
+  - [x] Roll size and color traits
+  - [x] Insert fish_instance and return full fish data
+- [x] **Dev B:** Implement `GET /fish/pool` -- return remaining counts per species
+- [x] **Dev B:** Write tests for catch logic (rarity distribution, pool depletion, edge cases)
 
 Design:
 - [ ] **Designer:** Deliver all 10 fish sprites (base color)
@@ -271,9 +271,9 @@ Client:
 - [ ] **Dev A:** Implement navigation: Main Menu -> Fishing -> Reveal -> (Inventory | Fishing)
 
 Backend:
-- [ ] **Dev B:** Implement `GET /player/inventory` -- return all fish for authenticated player
-- [ ] **Dev B:** Implement `GET /player/inventory/:id` -- return single fish detail
-- [ ] **Dev B:** Add pagination to inventory endpoint (offset + limit)
+- [x] **Dev B:** Implement `GET /player/inventory` -- return all fish for authenticated player
+- [x] **Dev B:** Implement `GET /player/inventory/:id` -- return single fish detail
+- [x] **Dev B:** Add pagination to inventory endpoint (offset + limit)
 
 Design:
 - [ ] **Designer:** Design fish reveal screen layout (the "unboxing" moment)
@@ -288,9 +288,9 @@ Design:
 - [ ] **Dev A:** Add bobber animation (idle float, dip on bite)
 - [ ] **Dev A:** Add fish sprite animation on reveal (bounce/shimmer)
 - [ ] **Dev A:** Tune minigame difficulty per rarity tier via Godot MCP + Claude Code
-- [ ] **Dev B:** Add rate limiting on `/fish/catch` (max 1 catch per 3 seconds)
-- [ ] **Dev B:** Add basic error responses (pool empty, invalid timing, server errors)
-- [ ] **Dev B:** Stress test: simulate 100 players depleting a fish pool
+- [x] **Dev B:** Add rate limiting on `/fish/catch` (max 1 catch per 3 seconds)
+- [x] **Dev B:** Add basic error responses (pool empty, invalid timing, server errors)
+- [x] **Dev B:** Stress test: simulate 100 players depleting a fish pool
 - [ ] **Designer:** Final polish pass on all sprites and UI elements
 - [ ] **Designer:** Create app icon and splash screen
 - [ ] **ALL:** Playtest session -- each team member plays 30+ minutes
@@ -300,7 +300,7 @@ Design:
 ### Phase 5 -- Build & Deploy (Day 25-28)
 
 - [ ] **Dev A:** Export Android APK from Godot (or desktop build for easier testing)
-- [ ] **Dev B:** Dockerize Go backend (single container with SQLite volume mount)
+- [x] **Dev B:** Dockerize Go backend (single container with SQLite volume mount)
 - [ ] **Dev B:** Deploy backend to a cheap VPS (Hetzner, Fly.io, or similar)
 - [ ] **Dev A:** Point client `network.gd` at deployed backend URL
 - [ ] **ALL:** End-to-end test on real device / real server

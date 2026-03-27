@@ -98,7 +98,7 @@ All protected endpoints require the `Authorization: Bearer <token>` header.
 
 #### `POST /fish/catch`
 
-Catch a fish. Send a `timing_score` between 0.0 (worst) and 1.0 (perfect). Higher scores increase the chance of rarer fish.
+Catch a fish. Send a `timing_score` between 0.0 (worst) and 1.0 (perfect). Higher scores increase the chance of rarer fish. Rate limited to **1 catch per 3 seconds** per player.
 
 ```bash
 curl -X POST http://localhost:8080/fish/catch \
@@ -122,6 +122,17 @@ If all fish in every pool are depleted:
 
 ```json
 {"result": "miss", "reason": "all fish depleted"}
+```
+
+If rate limited (called again within 3 seconds):
+
+```
+HTTP 429 Too Many Requests
+Retry-After: 3
+```
+
+```json
+{"error": "too many requests", "retry_after_seconds": 3}
 ```
 
 #### `GET /fish/pool`
@@ -196,6 +207,7 @@ backend/
       handler.go           -- Register & refresh endpoints
       jwt.go               -- Token generation & validation
       middleware.go         -- Bearer token middleware
+      ratelimit.go         -- Per-player rate limiting
     fish/
       handler.go           -- Catch & pool endpoints
       pool.go              -- Edition pool queries, number assignment
@@ -209,6 +221,12 @@ backend/
     001_init.sql           -- Schema (players, fish_species, fish_instances)
     002_seed_species.sql   -- 10 MVP fish species
     embed.go               -- Embeds .sql files into the binary
+  tests/
+    helpers_test.go        -- Shared test DB setup and helpers
+    species_test.go        -- Rarity weight tests
+    traits_test.go         -- Size & color roll tests
+    pool_test.go           -- Edition pool and number assignment tests
+    stress_test.go         -- Concurrent pool depletion (100 workers)
   Dockerfile               -- Multi-stage build
   .dockerignore
 ```
@@ -250,3 +268,24 @@ Each fish gets independent random rolls for size and color:
 
 - **Size**: normal (70%), large (15%), mini (10%), giant (5%)
 - **Color**: normal (80%), albino (7%), melanistic (6%), rainbow (4%), neon (3%)
+
+## Testing
+
+```bash
+cd backend
+
+# Run all tests
+go test ./tests/ -v
+
+# Run only stress tests
+go test ./tests/ -v -run "Stress"
+```
+
+### Test Coverage
+
+| File | Tests |
+|------|-------|
+| `species_test.go` | Rarity weights at 0.0 and 1.0, clamping, monotonicity |
+| `traits_test.go` | Valid variant returns, distribution sanity checks (100K rolls) |
+| `pool_test.go` | Pool status tracking, depletion returns nil, edition number assignment + exhaustion |
+| `stress_test.go` | 100 concurrent workers depleting 200-copy pool, multi-species concurrent depletion |

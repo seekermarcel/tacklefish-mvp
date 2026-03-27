@@ -1,0 +1,101 @@
+package tests
+
+import (
+	"database/sql"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/tacklefish/backend/internal/fish"
+	_ "github.com/mattn/go-sqlite3"
+)
+
+const schema = `
+	CREATE TABLE players (
+		id         INTEGER PRIMARY KEY AUTOINCREMENT,
+		device_id  TEXT    UNIQUE NOT NULL,
+		created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+	);
+	CREATE TABLE fish_species (
+		id           INTEGER PRIMARY KEY AUTOINCREMENT,
+		name         TEXT    NOT NULL,
+		rarity       TEXT    NOT NULL,
+		edition_size INTEGER NOT NULL,
+		zone         INTEGER NOT NULL DEFAULT 1
+	);
+	CREATE TABLE fish_instances (
+		id             INTEGER PRIMARY KEY AUTOINCREMENT,
+		species_id     INTEGER NOT NULL REFERENCES fish_species(id),
+		owner_id       INTEGER NOT NULL REFERENCES players(id),
+		edition_number INTEGER NOT NULL,
+		size_variant   TEXT    NOT NULL,
+		color_variant  TEXT    NOT NULL,
+		caught_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+		UNIQUE(species_id, edition_number)
+	);
+`
+
+// setupMemoryDB creates an in-memory SQLite database. Suitable for single-goroutine tests.
+func setupMemoryDB(t *testing.T) *sql.DB {
+	t.Helper()
+	db, err := sql.Open("sqlite3", ":memory:?_foreign_keys=ON")
+	if err != nil {
+		t.Fatal("open db:", err)
+	}
+	if _, err := db.Exec(schema); err != nil {
+		t.Fatal("schema:", err)
+	}
+	if _, err := db.Exec(`INSERT INTO players (device_id) VALUES ('test-device')`); err != nil {
+		t.Fatal("seed player:", err)
+	}
+	t.Cleanup(func() { db.Close() })
+	return db
+}
+
+// setupFileDB creates a file-based SQLite database with WAL mode.
+// Required for tests with concurrent goroutines.
+func setupFileDB(t *testing.T) *sql.DB {
+	t.Helper()
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "test.db")
+
+	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL&_foreign_keys=ON&_busy_timeout=5000")
+	if err != nil {
+		t.Fatal("open db:", err)
+	}
+	if _, err := db.Exec(schema); err != nil {
+		t.Fatal("schema:", err)
+	}
+	if _, err := db.Exec(`INSERT INTO players (device_id) VALUES ('test-device')`); err != nil {
+		t.Fatal("seed player:", err)
+	}
+	t.Cleanup(func() {
+		db.Close()
+		os.RemoveAll(dir)
+	})
+	return db
+}
+
+func seedSpecies(t *testing.T, db *sql.DB, name string, rarity fish.Rarity, editionSize int) int64 {
+	t.Helper()
+	result, err := db.Exec(
+		`INSERT INTO fish_species (name, rarity, edition_size, zone) VALUES (?, ?, ?, 1)`,
+		name, string(rarity), editionSize,
+	)
+	if err != nil {
+		t.Fatal("seed species:", err)
+	}
+	id, _ := result.LastInsertId()
+	return id
+}
+
+func catchFish(t *testing.T, db *sql.DB, speciesID int64, editionNum int) {
+	t.Helper()
+	_, err := db.Exec(
+		`INSERT INTO fish_instances (species_id, owner_id, edition_number, size_variant, color_variant) VALUES (?, 1, ?, 'normal', 'normal')`,
+		speciesID, editionNum,
+	)
+	if err != nil {
+		t.Fatal("catch fish:", err)
+	}
+}

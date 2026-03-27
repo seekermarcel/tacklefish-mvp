@@ -39,10 +39,18 @@ docker compose up
 
 The API server starts on `http://localhost:8080`. See [backend/README.md](backend/README.md) for full API documentation.
 
+### Run the tests
+
+```bash
+cd backend
+go test ./tests/ -v
+```
+
 ### Documentation
 
 - [Game Design Document](docs/game-design-document.md) -- full game design with mechanics, economy, and technical architecture
 - [MVP Plan](docs/mvp.md) -- scoped MVP with team roles, TODOs, and success criteria
+- [Frontend Transfer Document](docs/frontend-transfer.md) -- API contract and integration guide for the Godot client
 
 ## Team
 
@@ -51,4 +59,4 @@ The API server starts on `http://localhost:8080`. See [backend/README.md](backen
 
 ## Status
 
-Early development -- backend MVP is functional, Godot client is next.
+Early development -- backend MVP is complete (all endpoints, rate limiting, tests), Godot client is next.

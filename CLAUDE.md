@@ -16,6 +16,7 @@ Tacklefish is a casual mobile fishing game where every fish is a unique, numbere
 
 - `docs/game-design-document.md` -- Full GDD with mechanics, economy, tech architecture
 - `docs/mvp.md` -- Scoped MVP plan with team roles, TODOs, success criteria
+- `docs/frontend-transfer.md` -- API contract and integration guide for the Godot client
 - `references/Tacklefish_Konzept.docx` -- Original concept document (German)
 
 ## Repository Structure
@@ -23,11 +24,12 @@ Tacklefish is a casual mobile fishing game where every fish is a unique, numbere
 ```
 backend/               -- Go API server
   cmd/server/          -- Entry point
-  internal/auth/       -- Device ID + JWT auth
+  internal/auth/       -- Device ID + JWT auth, rate limiting
   internal/fish/       -- Catch logic, edition pools, traits, rarity
   internal/player/     -- Inventory endpoints
   internal/db/         -- SQLite connection and migrations
   migrations/          -- SQL schema and seed data
+  tests/               -- All backend tests (unit, distribution, stress)
 docs/                  -- Design documents
 references/            -- Source material
 docker-compose.yml     -- Run backend via Docker
@@ -56,6 +58,8 @@ Server runs on `http://localhost:8080`. See `backend/README.md` for full API doc
 - Use `internal/` packages -- nothing is exported outside the module
 - Error responses are JSON: `{"error": "message"}`
 - Environment config via `os.Getenv` with sensible defaults, no config files
+- Rate limiting via in-memory per-player tracking (`internal/auth/ratelimit.go`)
+- Tests live in `backend/tests/` (external test package), run with `go test ./tests/ -v`
 
 ### Godot (Client) -- Not Yet Started
 
