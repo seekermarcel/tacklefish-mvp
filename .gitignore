@@ -70,6 +70,10 @@ go.work
 backend/server
 backend/tacklefish
 
+# Test coverage
+coverage.out
+coverage.html
+
 ### Docker ###
 docker-compose.override.yml
 

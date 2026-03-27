@@ -274,17 +274,54 @@ Each fish gets independent random rolls for size and color:
 ```bash
 cd backend
 
-# Run all tests
-go test ./tests/ -v
-
-# Run only stress tests
-go test ./tests/ -v -run "Stress"
+make test              # Run all tests
+make coverage          # Run tests with per-function coverage report
+make coverage-html     # Generate HTML coverage report (coverage.html)
 ```
 
-### Test Coverage
+Or without Make:
+
+```bash
+go test ./tests/ -v                                                        # Run all tests
+go test ./tests/ -v -run "Stress"                                          # Only stress tests
+go test ./tests/ -coverprofile=coverage.out -coverpkg=github.com/tacklefish/backend/internal/...  # Coverage
+go tool cover -func=coverage.out                                           # Per-function report
+go tool cover -html=coverage.out -o coverage.html                          # HTML report
+```
+
+### Coverage: 83.3%
+
+| Package | Function | Coverage |
+|---------|----------|----------|
+| `auth` | GenerateToken | 100% |
+| `auth` | ValidateToken | 80% |
+| `auth` | Register | 78% |
+| `auth` | Refresh | 67% |
+| `auth` | Middleware | 100% |
+| `auth` | GetClaims | 100% |
+| `auth` | newRateLimiter | 100% |
+| `auth` | allow | 100% |
+| `auth` | RateLimitMiddleware | 86% |
+| `fish` | Catch | 82% |
+| `fish` | Pool | 67% |
+| `fish` | rollRarity | 92% |
+| `fish` | pickWithFallback | 92% |
+| `fish` | PoolStatus | 82% |
+| `fish` | PickSpecies | 81% |
+| `fish` | AssignEditionNumber | 84% |
+| `fish` | RarityWeights | 100% |
+| `fish` | lerp / clamp | 100% |
+| `fish` | RollSize | 100% |
+| `fish` | RollColor | 100% |
+| `player` | Inventory | 69% |
+| `player` | FishDetail | 79% |
+
+### Test Files (33 tests)
 
 | File | Tests |
 |------|-------|
+| `auth_test.go` | JWT generate/validate, register/refresh handlers, middleware (valid/missing/bad/invalid token), rate limiter (allow/block/cooldown) |
+| `handler_test.go` | Catch (success, invalid timing, no claims, pool depleted), pool status, inventory (list, pagination, empty), fish detail (success, not found, wrong owner, invalid ID) |
 | `species_test.go` | Rarity weights at 0.0 and 1.0, clamping, monotonicity |
 | `traits_test.go` | Valid variant returns, distribution sanity checks (100K rolls) |
 | `pool_test.go` | Pool status tracking, depletion returns nil, edition number assignment + exhaustion |
