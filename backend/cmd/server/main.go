@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/tacklefish/backend/internal/auth"
 	"github.com/tacklefish/backend/internal/db"
@@ -43,9 +44,12 @@ func main() {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	// Rate limiter for catch endpoint (1 catch per 3 seconds per player).
+	catchRateLimit := auth.RateLimitMiddleware(3 * time.Second)
+
 	// Protected routes (auth required).
 	protected := http.NewServeMux()
-	protected.HandleFunc("POST /fish/catch", fishHandler.Catch)
+	protected.Handle("POST /fish/catch", catchRateLimit(http.HandlerFunc(fishHandler.Catch)))
 	protected.HandleFunc("GET /fish/pool", fishHandler.Pool)
 	protected.HandleFunc("GET /player/inventory", playerHandler.Inventory)
 	protected.HandleFunc("GET /player/inventory/{id}", playerHandler.FishDetail)
