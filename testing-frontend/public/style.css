@@ -1,0 +1,383 @@
+/* --- Reset & Base --- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0f1923;
+    color: #e0e0e0;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 16px;
+    min-height: 100vh;
+}
+
+/* --- Header --- */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #2a3a4a;
+    margin-bottom: 20px;
+}
+
+header h1 {
+    font-size: 1.3rem;
+    color: #4fc3f7;
+}
+
+#status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #90a4ae;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #f44336;
+    display: inline-block;
+}
+
+.status-dot.connected {
+    background: #4caf50;
+}
+
+/* --- Sections --- */
+section {
+    background: #1a2733;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+section h2 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: #b0bec5;
+}
+
+/* --- Phases --- */
+.phase { text-align: center; }
+.hidden { display: none !important; }
+
+/* --- Buttons --- */
+.btn-cast {
+    background: #4fc3f7;
+    color: #0f1923;
+    border: none;
+    padding: 14px 40px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-cast:hover { background: #29b6f6; }
+.btn-cast:disabled { background: #37474f; color: #607d8b; cursor: not-allowed; }
+
+.btn-action {
+    background: #66bb6a;
+    color: #0f1923;
+    border: none;
+    padding: 10px 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: background 0.2s;
+}
+
+.btn-action:hover { background: #43a047; }
+
+.btn-secondary {
+    background: transparent;
+    color: #4fc3f7;
+    border: 1px solid #4fc3f7;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 12px;
+    font-size: 0.9rem;
+}
+
+.btn-secondary:hover { background: rgba(79, 195, 247, 0.1); }
+
+/* --- Power Bar --- */
+.bar-track {
+    width: 100%;
+    height: 40px;
+    background: #263238;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    margin: 12px 0;
+}
+
+.bar-indicator {
+    width: 16px;
+    height: 100%;
+    background: #4fc3f7;
+    border-radius: 4px;
+    position: absolute;
+    left: 0;
+    transition: none;
+}
+
+/* --- Wait / Bobber --- */
+.wait-container {
+    padding: 30px 0;
+}
+
+.bobber {
+    width: 20px;
+    height: 20px;
+    background: #f44336;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    animation: bobber-float 1.5s ease-in-out infinite;
+}
+
+@keyframes bobber-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+
+.wait-container p {
+    color: #78909c;
+    font-style: italic;
+}
+
+/* --- Timing Minigame --- */
+.timing-track {
+    width: 100%;
+    height: 50px;
+    background: #263238;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    margin: 12px 0;
+}
+
+.timing-zone {
+    position: absolute;
+    height: 100%;
+    background: rgba(76, 175, 80, 0.3);
+    border-left: 2px solid #4caf50;
+    border-right: 2px solid #4caf50;
+}
+
+.timing-indicator {
+    width: 6px;
+    height: 100%;
+    background: #ff9800;
+    position: absolute;
+    left: 0;
+    border-radius: 2px;
+}
+
+/* --- Rarity Colors --- */
+.rarity-common { color: #9e9e9e; border-color: #9e9e9e; }
+.rarity-uncommon { color: #4caf50; border-color: #4caf50; }
+.rarity-rare { color: #2196f3; border-color: #2196f3; }
+.rarity-epic { color: #9c27b0; border-color: #9c27b0; }
+.rarity-legendary { color: #ff9800; border-color: #ff9800; }
+
+.rarity-bg-common { background: #9e9e9e; }
+.rarity-bg-uncommon { background: #4caf50; }
+.rarity-bg-rare { background: #2196f3; }
+.rarity-bg-epic { background: #9c27b0; }
+.rarity-bg-legendary { background: #ff9800; }
+
+/* --- Fish Reveal Card --- */
+.fish-reveal-card {
+    background: #263238;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 0 auto 16px;
+    max-width: 320px;
+    border: 2px solid #37474f;
+    animation: reveal-pop 0.4s ease-out;
+}
+
+@keyframes reveal-pop {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.fish-reveal-card h3 {
+    font-size: 1.4rem;
+    margin: 8px 0;
+}
+
+.rarity-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #0f1923;
+}
+
+.edition {
+    font-size: 1.1rem;
+    color: #b0bec5;
+    margin: 8px 0;
+    font-weight: 600;
+}
+
+.trait-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.trait-badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    background: #37474f;
+    color: #cfd8dc;
+}
+
+/* --- Miss Card --- */
+.miss-card, .error-card {
+    background: #263238;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 0 auto 16px;
+    max-width: 320px;
+    border: 2px solid #f44336;
+}
+
+.miss-card h3 { color: #ef9a9a; }
+.error-card p { color: #ef9a9a; }
+
+#error-countdown {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ff9800;
+    margin-top: 8px;
+}
+
+/* --- Inventory Grid --- */
+.fish-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.fish-card {
+    background: #263238;
+    border-radius: 8px;
+    padding: 12px;
+    border-left: 4px solid #37474f;
+    font-size: 0.85rem;
+}
+
+.fish-card .fish-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+
+.fish-card .fish-edition {
+    color: #90a4ae;
+    margin-bottom: 6px;
+}
+
+.fish-card .fish-traits {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.fish-card .fish-traits span {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    background: #1a2733;
+}
+
+.fish-card .fish-time {
+    font-size: 0.7rem;
+    color: #607d8b;
+    margin-top: 6px;
+}
+
+/* --- Pool Table --- */
+#pool-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+#pool-table th {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid #37474f;
+    color: #78909c;
+    font-weight: 600;
+}
+
+#pool-table td {
+    padding: 8px;
+    border-bottom: 1px solid #1a2733;
+}
+
+.pool-bar-container {
+    width: 100%;
+    height: 14px;
+    background: #1a2733;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.pool-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+
+/* --- Debug --- */
+#debug {
+    margin-top: 16px;
+}
+
+#debug summary {
+    cursor: pointer;
+    color: #607d8b;
+    font-size: 0.85rem;
+    padding: 8px;
+}
+
+#debug-log {
+    max-height: 400px;
+    overflow-y: auto;
+    font-size: 0.75rem;
+    font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+}
+
+.debug-entry {
+    padding: 6px 8px;
+    border-bottom: 1px solid #1a2733;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.debug-entry.req { color: #4fc3f7; }
+.debug-entry.res { color: #81c784; }
+.debug-entry.err { color: #ef9a9a; }
+
+/* --- Responsive --- */
+@media (max-width: 500px) {
+    .fish-grid { grid-template-columns: 1fr; }
+    .fish-reveal-card { max-width: 100%; }
+}

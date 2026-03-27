@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tacklefish - Test Client</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Tacklefish Test Client</h1>
+        <div id="status">
+            <span id="connection-status" class="status-dot"></span>
+            <span id="player-info">Connecting...</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Game Area -->
+        <section id="game">
+            <h2>Fishing</h2>
+
+            <!-- Idle -->
+            <div id="phase-idle" class="phase">
+                <button id="btn-cast" class="btn-cast">Cast Line</button>
+            </div>
+
+            <!-- Casting (power bar) -->
+            <div id="phase-cast" class="phase hidden">
+                <p>Tap to set cast power!</p>
+                <div class="bar-track">
+                    <div id="cast-indicator" class="bar-indicator"></div>
+                </div>
+                <button id="btn-lock-cast" class="btn-action">Lock Cast</button>
+            </div>
+
+            <!-- Waiting for bite -->
+            <div id="phase-wait" class="phase hidden">
+                <div class="wait-container">
+                    <div class="bobber"></div>
+                    <p>Waiting for a bite...</p>
+                </div>
+            </div>
+
+            <!-- Timing minigame -->
+            <div id="phase-timing" class="phase hidden">
+                <p>Tap when the indicator is in the green zone!</p>
+                <div class="timing-track">
+                    <div id="timing-zone" class="timing-zone"></div>
+                    <div id="timing-indicator" class="timing-indicator"></div>
+                </div>
+                <button id="btn-catch" class="btn-action">Catch!</button>
+            </div>
+
+            <!-- Fish reveal -->
+            <div id="phase-reveal" class="phase hidden">
+                <div id="reveal-card" class="fish-reveal-card">
+                    <div id="reveal-rarity-badge" class="rarity-badge"></div>
+                    <h3 id="reveal-species"></h3>
+                    <p id="reveal-edition" class="edition"></p>
+                    <div class="trait-row">
+                        <span id="reveal-size" class="trait-badge"></span>
+                        <span id="reveal-color" class="trait-badge"></span>
+                    </div>
+                </div>
+                <button id="btn-cast-again" class="btn-cast">Cast Again</button>
+            </div>
+
+            <!-- Miss / depleted -->
+            <div id="phase-miss" class="phase hidden">
+                <div class="miss-card">
+                    <h3 id="miss-title">No Fish!</h3>
+                    <p id="miss-reason"></p>
+                </div>
+                <button id="btn-cast-after-miss" class="btn-cast">Cast Again</button>
+            </div>
+
+            <!-- Error / rate limit -->
+            <div id="phase-error" class="phase hidden">
+                <div class="error-card">
+                    <p id="error-message"></p>
+                    <p id="error-countdown"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Inventory -->
+        <section id="inventory">
+            <h2>Inventory <span id="inventory-count">(0)</span></h2>
+            <div id="inventory-grid" class="fish-grid"></div>
+            <button id="btn-load-more" class="btn-secondary hidden">Load More</button>
+        </section>
+
+        <!-- Pool Status -->
+        <section id="pool">
+            <h2>Fish Pool</h2>
+            <table id="pool-table">
+                <thead>
+                    <tr>
+                        <th>Species</th>
+                        <th>Rarity</th>
+                        <th>Remaining</th>
+                        <th>Pool</th>
+                    </tr>
+                </thead>
+                <tbody id="pool-body"></tbody>
+            </table>
+        </section>
+
+        <!-- Debug Log -->
+        <details id="debug">
+            <summary>Debug Log</summary>
+            <div id="debug-log"></div>
+        </details>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
