@@ -57,6 +57,14 @@ go test ./tests/ -v
 - 2 developers
 - 1 designer
 
+## Git Hooks
+
+The repo uses a pre-commit hook that runs backend tests when backend code is changed. It's set up automatically via `.githooks/`. On a fresh clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ## Status
 
 Early development -- backend MVP is complete (all endpoints, rate limiting, tests), Godot client is next.

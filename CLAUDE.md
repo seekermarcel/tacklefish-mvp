@@ -80,11 +80,20 @@ These have been decided and should not be changed without discussion:
 - **Godot 4.x** with GDScript, not Unity or Unreal
 - **No pay-to-win** -- real money only buys fish from other players, never gameplay advantages
 
+## Testing Rules
+
+- **Every new important function must have a test.** When adding functions to `internal/`, also write tests in `backend/tests/` in the same session.
+- Tests use the external test package pattern (`package tests`) with shared helpers in `helpers_test.go`.
+- Use `httptest` for handler tests, inject auth claims via `requestWithClaims()` helper.
+- Run `make coverage` after adding tests to verify coverage doesn't drop below 83%.
+- Coverage is measured with `-coverpkg=github.com/tacklefish/backend/internal/...` to track all internal packages.
+
 ## Git Workflow
 
 - Never commit or push unless specifically told to
 - Keep commits focused and descriptive
 - No force pushes to main
+- Pre-commit hook runs backend tests automatically when backend code is staged. Hooks live in `.githooks/` (tracked in git, set via `git config core.hooksPath .githooks`)
 
 ## MVP Focus
 

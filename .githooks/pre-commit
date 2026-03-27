@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Check if any backend files are staged for commit.
+BACKEND_CHANGED=$(git diff --cached --name-only -- 'backend/' | grep -v '_test.go' | grep -v 'README' | grep -v 'Makefile' | head -1)
+
+if [ -z "$BACKEND_CHANGED" ]; then
+    exit 0
+fi
+
+echo "Backend code changed — running tests..."
+
+cd backend || exit 1
+
+if ! go test ./tests/ -count=1; then
+    echo ""
+    echo "COMMIT BLOCKED: backend tests failed."
+    echo "Fix the failing tests before committing."
+    exit 1
+fi
+
+echo "All backend tests passed."
