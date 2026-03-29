@@ -21,6 +21,7 @@ func _ready() -> void:
 	exit_button.pressed.connect(_on_exit_pressed)
 	_fit_background()
 	get_tree().root.size_changed.connect(_fit_background)
+	AudioManager.play_music()
 	_auto_register()
 
 func _fit_background() -> void:
@@ -44,6 +45,7 @@ func _auto_register() -> void:
 		status_label.text = "Connection failed. Check backend."
 
 func _on_start_pressed() -> void:
+	AudioManager.play_sfx_start_game()
 	start_button.disabled = true
 	exit_button.disabled = true
 

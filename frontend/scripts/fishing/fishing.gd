@@ -130,6 +130,7 @@ func _start_casting() -> void:
 	status_label.visible = true
 
 func _lock_cast() -> void:
+	AudioManager.play_sfx_cast()
 	cast_power = cast_position
 	fishing_rod.play("throw")
 	fishing_rod.animation_finished.connect(_on_rod_throw_finished)
@@ -197,10 +198,12 @@ func _on_bite_tap() -> void:
 
 func _start_minigame() -> void:
 	current_phase = Phase.MINIGAME
+	AudioManager.play_reel_in()
 	minigame_overlay.visible = true
 	minigame_overlay.start_minigame()
 
 func _on_fish_caught() -> void:
+	AudioManager.stop_reel_in()
 	minigame_overlay.visible = false
 	bobber.visible = false
 	bobber.stop()
@@ -208,6 +211,7 @@ func _on_fish_caught() -> void:
 	_on_catch()
 
 func _on_fish_escaped() -> void:
+	AudioManager.stop_reel_in()
 	minigame_overlay.visible = false
 	bobber.visible = false
 	bobber.stop()

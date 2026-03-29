@@ -20,6 +20,7 @@ func _ready() -> void:
 			_on_inventory()
 	)
 
+	AudioManager.play_sfx_fish_caught()
 	var fish_data: Variant = GameState.get_meta("last_catch") if GameState.has_meta("last_catch") else null
 	if fish_data is Dictionary:
 		_display_fish(fish_data)
