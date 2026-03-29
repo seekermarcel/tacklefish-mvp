@@ -8,12 +8,18 @@ extends Control
 @onready var edition_label: Label = %EditionLabel
 @onready var size_label: Label = %SizeLabel
 @onready var color_label: Label = %ColorLabel
-@onready var back_to_inventory_button: Button = %BackToInventoryButton
-@onready var back_to_pond_button: Button = %BackToPondButton
+@onready var back_to_inventory_button: Label = %BackToInventoryButton
+@onready var back_to_pond_button: Label = %BackToPondButton
 
 func _ready() -> void:
-	back_to_inventory_button.pressed.connect(_on_back_to_inventory)
-	back_to_pond_button.pressed.connect(_on_back_to_pond)
+	back_to_inventory_button.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_on_back_to_inventory()
+	)
+	back_to_pond_button.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_on_back_to_pond()
+	)
 
 	var fish_data: Variant = GameState.get_meta("selected_fish") if GameState.has_meta("selected_fish") else null
 	if fish_data is Dictionary:

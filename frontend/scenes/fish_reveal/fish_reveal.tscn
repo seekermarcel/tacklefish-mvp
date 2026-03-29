@@ -185,24 +185,30 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="CastAgainButton" type="Button" parent="VBox" unique_id=164237593]
+[node name="CastAgainButton" type="Label" parent="VBox" unique_id=164237593]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
-size_flags_horizontal = 4
+mouse_filter = 0
+theme_override_colors/font_color = Color(0.96, 0.94, 0.87, 1)
+theme_override_colors/font_outline_color = Color(0.12, 0.1, 0.08, 1)
+theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("2")
 theme_override_font_sizes/font_size = 24
 text = "Cast Again"
+horizontal_alignment = 1
 
 [node name="Spacer2" type="Control" parent="VBox" unique_id=618614691]
 custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
-[node name="InventoryButton" type="Button" parent="VBox" unique_id=2073900215]
+[node name="InventoryButton" type="Label" parent="VBox" unique_id=2073900215]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_horizontal = 4
+mouse_filter = 0
+theme_override_colors/font_color = Color(0.96, 0.94, 0.87, 1)
+theme_override_colors/font_outline_color = Color(0.12, 0.1, 0.08, 1)
+theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("2")
 theme_override_font_sizes/font_size = 18
 text = "View Inventory"
+horizontal_alignment = 1

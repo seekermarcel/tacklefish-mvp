@@ -7,12 +7,18 @@ extends Control
 @onready var edition_label: Label = %EditionLabel
 @onready var size_label: Label = %SizeLabel
 @onready var color_label: Label = %ColorLabel
-@onready var cast_again_button: Button = %CastAgainButton
-@onready var inventory_button: Button = %InventoryButton
+@onready var cast_again_button: Label = %CastAgainButton
+@onready var inventory_button: Label = %InventoryButton
 
 func _ready() -> void:
-	cast_again_button.pressed.connect(_on_cast_again)
-	inventory_button.pressed.connect(_on_inventory)
+	cast_again_button.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_on_cast_again()
+	)
+	inventory_button.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_on_inventory()
+	)
 
 	var fish_data: Variant = GameState.get_meta("last_catch") if GameState.has_meta("last_catch") else null
 	if fish_data is Dictionary:
