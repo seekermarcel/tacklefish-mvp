@@ -30,19 +30,23 @@ backend/               -- Go API server
   internal/db/         -- SQLite connection and migrations
   migrations/          -- SQL schema and seed data
   tests/               -- All backend tests (unit, distribution, stress)
-frontend/              -- Godot 4.x game client
+frontend/              -- Godot 4.6 game client
   scenes/              -- Scene files organized by feature
-    main_menu/         -- Start screen with auto-auth
-    fishing/           -- Cast bar, wait phase, timing minigame
+    main_menu/         -- Animated title screen with play/exit buttons
+    fishing/           -- Tap-anywhere fishing: cast, wait, timing minigame
     fish_reveal/       -- Post-catch reveal screen
-    inventory/         -- Scrollable fish collection
+    inventory/         -- Collection book with search, filters, fish cards
   scripts/
-    autoload/          -- Singletons: GameState, Auth, Network
-    main_menu/         -- Main menu logic
-    fishing/           -- Fishing flow controller
+    autoload/          -- Singletons: GameState, Auth, Network, SceneTransition
+    main_menu/         -- Auto-register, zoom + iris wipe transition
+    fishing/           -- Cast -> wait -> timing -> catch flow
     fish_reveal/       -- Reveal screen logic
-    inventory/         -- Inventory list + pagination
-  resources/           -- Fish species, sprites, UI assets
+    inventory/         -- Collection book with search/filter/pagination
+  resources/
+    fonts/             -- Pixel art font
+    sprites/
+      environment/     -- Title background (animated), fishing pond background
+      ui/              -- Wooden buttons, progress bar, inventory/market icons
 testing-frontend/      -- Browser-based test client (HTML/JS/nginx)
 docs/                  -- Design documents
 references/            -- Source material
@@ -83,14 +87,17 @@ Testing frontend runs on `http://localhost:3000`.
 
 - **Godot 4.6** with GDScript, mobile renderer
 - Portrait orientation (720x1280 viewport, canvas_items stretch)
-- 3 autoload singletons registered in `project.godot`:
+- 4 autoload singletons registered in `project.godot`:
   - `GameState` -- player ID, inventory, pool data
   - `Auth` -- device UUID generation/persistence, JWT token storage
   - `Network` -- HTTP client wrapping all API calls, auto-refresh on 401, rate limit handling
+  - `SceneTransition` -- Animal Crossing-style iris wipe shader, used for all scene changes
 - Scenes organized by feature in `scenes/`, scripts in matching `scripts/` subdirectories
 - Scenes use `unique_name_in_owner` (`%NodeName`) for node references
 - All game logic is server-side -- client only sends `timing_score` and displays results
-- Fish species defined as Godot resources (`.tres`) in `resources/fish_species/` (not yet created)
+- Pixel art assets use `texture_filter = 0` (nearest neighbor) to stay crisp when scaled
+- Tap-anywhere input via `_unhandled_input`, non-interactive nodes use `mouse_filter = MOUSE_FILTER_IGNORE`
+- Custom pixel font (`resources/fonts/pixel.ttf`) for all UI text
 
 ## Technical Decisions
 

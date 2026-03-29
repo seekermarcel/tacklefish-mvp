@@ -221,8 +221,8 @@ Client:
 - [x] **Dev A:** Create `main_menu.tscn` -- simple start screen with "Fish!" button
 
 Design:
-- [ ] **Designer:** Finalize art style based on team vote
-- [ ] **Designer:** Create pond background (water, bank, sky)
+- [x] **Designer:** Finalize art style based on team vote (pixel art, Stardew Valley aesthetic)
+- [x] **Designer:** Create pond background (pixel art forest pond scene)
 - [ ] **Designer:** Start fish sprites (prioritize 3 common fish first)
 
 ### Phase 2 -- Fishing Mechanic (Day 6-12)
@@ -230,8 +230,9 @@ Design:
 Client (core mechanic -- this is the most important phase):
 - [x] **Dev A:** Build `fishing.tscn` -- pond background, water, bobber, cast button
 - [x] **Dev A:** Implement cast power bar -- filling/emptying loop, tap to lock (inline in fishing.tscn)
-- [x] **Dev A:** Implement bite wait phase -- random timer (2-6s)
-- [x] **Dev A:** Build timing minigame -- moving indicator, target zone (inline in fishing.tscn)
+- [x] **Dev A:** Implement bite wait phase -- random timer (2-6s, cast power affects duration)
+- [x] **Dev A:** Implement bite reaction -- "!" alert with 5s timeout, reaction time = timing score
+- [x] **Dev A:** Build fishing minigame overlay
 - [x] **Dev A:** Send timing score to backend on catch attempt
 - [x] **Dev A:** Handle miss (pool depleted) -- return to idle state
 - [ ] **Dev A:** Use Godot MCP + Claude Code to iterate on game feel (bar speed, zone size, timing windows)
@@ -251,8 +252,8 @@ Backend:
 Design:
 - [ ] **Designer:** Deliver all 10 fish sprites (base color)
 - [ ] **Designer:** Create color variants for each fish (albino, melanistic, rainbow, neon = 4 variants per fish)
-- [ ] **Designer:** Design bobber, cast bar, and minigame indicator sprites
-- [ ] **Designer:** Design the target zone visual for the timing minigame
+- [x] **Designer:** Design cast bar and progress bar sprites (wooden pixel art)
+- [ ] **Designer:** Design bobber and minigame indicator sprites
 
 ### Phase 3 -- Fish Reveal & Inventory (Day 13-18)
 
@@ -263,8 +264,11 @@ Client:
   - [x] Rarity badge (color-coded: common/uncommon/rare/epic/legendary)
   - [x] Size and color trait labels
   - [x] "Cast Again" button (returns to fishing)
-- [x] **Dev A:** Build inventory screen (`inventory.tscn`):
-  - [x] Scrollable list of caught fish (name, edition number, traits)
+- [x] **Dev A:** Build inventory as collection book (`inventory.tscn`):
+  - [x] 2-column grid of fish cards with rarity-colored borders
+  - [x] Search bar (filter by species name)
+  - [x] Rarity filter buttons (All, Common, Uncommon, Rare, Epic, Legendary)
+  - [x] Placeholder fish sprites (colored rectangles per species/variant)
   - [ ] Tap to open fish detail view -- not yet wired
 - [ ] **Dev A:** Build fish detail view (`fish_detail.tscn`):
   - [ ] Full fish sprite, all traits, caught timestamp
@@ -284,7 +288,7 @@ Design:
 ### Phase 4 -- Polish & Playtest (Day 19-24)
 
 - [ ] **Dev A:** Add placeholder SFX (cast splash, reel, catch chime, rare catch fanfare)
-- [ ] **Dev A:** Add screen transitions (fade/slide between scenes)
+- [x] **Dev A:** Add screen transitions (Animal Crossing iris wipe on all scene changes)
 - [ ] **Dev A:** Add bobber animation (idle float, dip on bite)
 - [ ] **Dev A:** Add fish sprite animation on reveal (bounce/shimmer)
 - [ ] **Dev A:** Tune minigame difficulty per rarity tier via Godot MCP + Claude Code

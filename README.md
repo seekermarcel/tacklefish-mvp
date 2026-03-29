@@ -76,4 +76,4 @@ git config core.hooksPath .githooks
 
 ## Status
 
-Early development -- backend MVP is complete (all endpoints, rate limiting, tests). Godot client has initial scaffolding with working fishing flow (cast, wait, timing minigame, catch, reveal, inventory). Still needs art assets, polish, and game feel tuning.
+Active development -- backend MVP is complete (all endpoints, rate limiting, tests). Godot client has a working game loop with pixel art UI: animated title screen with zoom+iris wipe transition, tap-anywhere fishing (cast power bar, wait, timing minigame), fish reveal screen, and a collection book inventory with search/filters. Wooden pixel art buttons and progress bars. Still needs fish sprites, sound effects, and game feel tuning.
