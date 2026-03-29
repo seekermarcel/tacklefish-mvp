@@ -2,8 +2,8 @@ extends Control
 ## Main menu scene. Auto-registers with the backend on load.
 
 # Point of interest in the source image (normalized 0-1).
-# The angler is at roughly 75% across, 80% down in the 320x320 image.
-const BG_FOCUS := Vector2(0.75, 0.80)
+# The fisher is roughly centered horizontally, ~70% down.
+const BG_FOCUS := Vector2(0.5, 0.70)
 
 @onready var background: Sprite2D = $Background
 @onready var start_button: TextureButton = %StartButton
@@ -24,14 +24,9 @@ func _fit_background() -> void:
 	# Scale to cover the full viewport.
 	var scale_factor := maxf(viewport_size.x / tex_size.x, viewport_size.y / tex_size.y)
 	background.scale = Vector2(scale_factor, scale_factor)
-	# Offset so the focus point lands at the viewport center.
+	# Center the image.
 	var scaled_size := tex_size * scale_factor
-	var focus_pixel := BG_FOCUS * scaled_size
-	var viewport_center := viewport_size * 0.5
-	var offset := viewport_center - focus_pixel
-	# Clamp so we don't show empty space at edges.
-	offset.x = clampf(offset.x, viewport_size.x - scaled_size.x, 0.0)
-	offset.y = clampf(offset.y, viewport_size.y - scaled_size.y, 0.0)
+	var offset := (viewport_size - scaled_size) * 0.5
 	background.position = offset
 
 func _auto_register() -> void:
@@ -50,9 +45,10 @@ func _on_start_pressed() -> void:
 	var viewport_size := get_viewport_rect().size
 	var tex_size := Vector2(background.texture.get_size())
 
-	# Zoom + fade UI + iris close all at once (1.0s).
+	# Zoom into the fisher + fade UI + iris close all at once (1.0s).
 	var zoom_target_scale := background.scale * 2.5
-	var zoom_target_pos := viewport_size * 0.5 - BG_FOCUS * tex_size * zoom_target_scale.x
+	var focus_in_scaled := BG_FOCUS * tex_size * zoom_target_scale.x
+	var zoom_target_pos := viewport_size * 0.5 - focus_in_scaled
 
 	SceneTransition.prepare_close(Vector2(0.5, 0.5))
 
