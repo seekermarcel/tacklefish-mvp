@@ -261,20 +261,6 @@ func _create_fish_card(data: Dictionary) -> Control:
 			_on_card_pressed(data)
 	)
 
-	# Thin outline (1px border via Panel + StyleBoxFlat).
-	var outline := Panel.new()
-	outline.set_anchors_preset(Control.PRESET_FULL_RECT)
-	outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var outline_style := StyleBoxFlat.new()
-	outline_style.bg_color = Color(0, 0, 0, 0)
-	outline_style.border_width_left = 1
-	outline_style.border_width_right = 1
-	outline_style.border_width_top = 1
-	outline_style.border_width_bottom = 1
-	outline_style.border_color = Color(0.3, 0.22, 0.15, 0.8)
-	outline.add_theme_stylebox_override("panel", outline_style)
-	# Add outline last (after texture) so it draws on top — we'll add it at the end.
-
 	# Card texture background — overflows the wrapper just like the detail scene.
 	# Detail scene: CardAnchor 480x880, texture offsets -48,-216,+72,+104.
 	# Proportional overflow ratios: L=-0.10, T=-0.245, R=+0.15, B=+0.118.
@@ -406,9 +392,6 @@ func _create_fish_card(data: Dictionary) -> Control:
 		rarity_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_anchor_rect(rarity_icon, 0.35, 0.862, 0.65, 0.933)
 		card_wrapper.add_child(rarity_icon)
-
-	# Outline on top of everything.
-	card_wrapper.add_child(outline)
 
 	return card_wrapper
 
