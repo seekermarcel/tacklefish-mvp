@@ -25,9 +25,7 @@ const TURN_RATE_MAX: float = 5.0
 
 # Visual
 const OVERLAY_COLOR := Color(0.05, 0.1, 0.2, 0.7)
-const ARENA_COLOR := Color(0.1, 0.15, 0.3, 0.9)
 const ARENA_BORDER_COLOR := Color(0.3, 0.4, 0.6, 0.8)
-const FISH_COLOR := Color(0.9, 0.9, 0.95, 1.0)
 const JOYSTICK_BASE_COLOR := Color(1.0, 1.0, 1.0, 0.15)
 const JOYSTICK_KNOB_COLOR := Color(1.0, 1.0, 1.0, 0.6)
 const PROGRESS_BG_COLOR := Color(1.0, 1.0, 1.0, 0.15)
@@ -53,6 +51,14 @@ var joystick_direction: Vector2 = Vector2.ZERO
 
 var arena_center: Vector2 = Vector2.ZERO
 
+# Animated sprites — drawn manually in _draw() for correct layering
+var bg_frames: SpriteFrames = preload("res://resources/sprites/minigame/minigame_bg.tres")
+var fish_frames: SpriteFrames = preload("res://resources/sprites/minigame/minigame_fish.tres")
+var bg_frame_index: int = 0
+var fish_frame_index: int = 0
+var bg_frame_timer: float = 0.0
+var fish_frame_timer: float = 0.0
+
 func start_minigame() -> void:
 	active = true
 	arena_center = size / 2.0
@@ -66,6 +72,10 @@ func start_minigame() -> void:
 	difficulty = randf_range(0.2, 0.9)
 	touch_active = false
 	joystick_direction = Vector2.ZERO
+	bg_frame_index = 0
+	fish_frame_index = 0
+	bg_frame_timer = 0.0
+	fish_frame_timer = 0.0
 	queue_redraw()
 
 func _process(delta: float) -> void:
@@ -73,6 +83,19 @@ func _process(delta: float) -> void:
 		return
 
 	elapsed += delta
+
+	# Advance sprite frame timers
+	bg_frame_timer += delta
+	var bg_speed := 4.0
+	if bg_frame_timer >= 1.0 / bg_speed:
+		bg_frame_timer -= 1.0 / bg_speed
+		bg_frame_index = (bg_frame_index + 1) % bg_frames.get_frame_count("default")
+
+	fish_frame_timer += delta
+	var fish_speed := 5.0
+	if fish_frame_timer >= 1.0 / fish_speed:
+		fish_frame_timer -= 1.0 / fish_speed
+		fish_frame_index = (fish_frame_index + 1) % fish_frames.get_frame_count("default")
 
 	# Accelerating difficulty over time
 	var progress := clampf(elapsed / CATCH_DURATION, 0.0, 1.0)
@@ -175,9 +198,16 @@ func _draw() -> void:
 	# Full-screen dark overlay
 	draw_rect(Rect2(Vector2.ZERO, size), OVERLAY_COLOR)
 
-	# Arena circle
-	draw_circle(arena_center, ARENA_RADIUS + 3.0, ARENA_BORDER_COLOR)
-	draw_circle(arena_center, ARENA_RADIUS, ARENA_COLOR)
+	# Arena background sprite
+	var bg_tex := bg_frames.get_frame_texture("default", bg_frame_index)
+	var bg_tex_size := Vector2(bg_tex.get_size())
+	var bg_scale := (ARENA_RADIUS * 2.0 + 20.0) / bg_tex_size.x
+	var bg_draw_size := bg_tex_size * bg_scale
+	var bg_draw_pos := arena_center - bg_draw_size / 2.0
+	draw_texture_rect(bg_tex, Rect2(bg_draw_pos, bg_draw_size), false)
+
+	# Arena border
+	draw_arc(arena_center, ARENA_RADIUS + 3.0, 0.0, TAU, 64, ARENA_BORDER_COLOR, 3.0)
 
 	# Progress arc around arena
 	_draw_progress_arc()
@@ -217,39 +247,20 @@ func _draw_progress_arc() -> void:
 
 func _draw_fish() -> void:
 	var fish_world_pos := arena_center + fish_pos
-	var angle := fish_velocity.angle() if fish_velocity.length_squared() > 1.0 else 0.0
-	var fish_size := 18.0
+	var angle := fish_velocity.angle() if fish_velocity.length_squared() > 1.0 else PI
 
-	# Fish body — elongated diamond shape
-	var points := PackedVector2Array([
-		Vector2(fish_size * 1.4, 0.0),    # nose
-		Vector2(-fish_size * 0.4, fish_size * 0.5),  # top fin
-		Vector2(-fish_size * 0.8, 0.0),   # back
-		Vector2(-fish_size * 0.4, -fish_size * 0.5), # bottom fin
-	])
+	var fish_tex := fish_frames.get_frame_texture("default", fish_frame_index)
+	var fish_tex_size := Vector2(fish_tex.get_size())
+	var fish_scale := 0.5
+	var draw_size := fish_tex_size * fish_scale
 
-	# Tail
-	var tail_points := PackedVector2Array([
-		Vector2(-fish_size * 0.7, 0.0),
-		Vector2(-fish_size * 1.3, fish_size * 0.45),
-		Vector2(-fish_size * 1.3, -fish_size * 0.45),
-	])
+	# Flip vertically when swimming left so fish doesn't appear upside down
+	var flip_y := 1.0 if absf(angle) <= PI / 2.0 else -1.0
 
-	# Rotate and translate
-	var rotated_body := PackedVector2Array()
-	for p in points:
-		rotated_body.append(fish_world_pos + p.rotated(angle))
-
-	var rotated_tail := PackedVector2Array()
-	for p in tail_points:
-		rotated_tail.append(fish_world_pos + p.rotated(angle))
-
-	draw_colored_polygon(rotated_tail, Color(FISH_COLOR, 0.7))
-	draw_colored_polygon(rotated_body, FISH_COLOR)
-
-	# Eye
-	var eye_offset := Vector2(fish_size * 0.6, -fish_size * 0.15).rotated(angle)
-	draw_circle(fish_world_pos + eye_offset, 2.5, Color(0.1, 0.1, 0.2))
+	# Draw rotated fish: offset by PI because sprite faces left
+	draw_set_transform(fish_world_pos, angle + PI, Vector2(1.0, flip_y))
+	draw_texture_rect(fish_tex, Rect2(-draw_size / 2.0, draw_size), false)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _draw_joystick() -> void:
 	# Base ring
