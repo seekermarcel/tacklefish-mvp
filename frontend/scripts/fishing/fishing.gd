@@ -25,6 +25,7 @@ var bite_tween: Tween = null
 @onready var wait_panel: PanelContainer = %WaitPanel
 @onready var wait_label: Label = %WaitLabel
 
+@onready var background: AnimatedSprite2D = $Background
 @onready var status_label: Label = %StatusLabel
 @onready var bite_label: Label = %BiteLabel
 @onready var minigame_overlay = %MinigameOverlay
@@ -35,7 +36,20 @@ func _ready() -> void:
 	inventory_button.pressed.connect(_on_inventory_pressed)
 	minigame_overlay.fish_caught.connect(_on_fish_caught)
 	minigame_overlay.fish_escaped.connect(_on_fish_escaped)
+	_fit_background()
+	get_tree().root.size_changed.connect(_fit_background)
 	_show_idle()
+
+func _fit_background() -> void:
+	var viewport_size := get_viewport_rect().size
+	var frames := background.sprite_frames
+	var tex := frames.get_frame_texture("default", 0)
+	var tex_size := Vector2(tex.get_size())
+	var scale_factor := maxf(viewport_size.x / tex_size.x, viewport_size.y / tex_size.y)
+	background.scale = Vector2(scale_factor, scale_factor)
+	var scaled_size := tex_size * scale_factor
+	var offset := (viewport_size - scaled_size) * 0.5
+	background.position = offset
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
