@@ -271,4 +271,4 @@ func _create_fish_card(data: Dictionary) -> PanelContainer:
 	return card
 
 func _on_back() -> void:
-	get_tree().change_scene_to_file("res://scenes/fishing/fishing.tscn")
+	await SceneTransition.iris_to("res://scenes/fishing/fishing.tscn")

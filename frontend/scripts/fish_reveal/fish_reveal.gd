@@ -46,7 +46,7 @@ func _display_fish(data: Dictionary) -> void:
 	color_label.text = "Color: %s" % data.get("color_variant", "normal").capitalize()
 
 func _on_cast_again() -> void:
-	get_tree().change_scene_to_file("res://scenes/fishing/fishing.tscn")
+	await SceneTransition.iris_to("res://scenes/fishing/fishing.tscn")
 
 func _on_inventory() -> void:
-	get_tree().change_scene_to_file("res://scenes/inventory/inventory.tscn")
+	await SceneTransition.iris_to("res://scenes/inventory/inventory.tscn")

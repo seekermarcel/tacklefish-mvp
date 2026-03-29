@@ -127,7 +127,7 @@ func _on_catch() -> void:
 			_show_idle()
 		else:
 			GameState.set_meta("last_catch", data)
-			get_tree().change_scene_to_file("res://scenes/fish_reveal/fish_reveal.tscn")
+			await SceneTransition.iris_to("res://scenes/fish_reveal/fish_reveal.tscn")
 	elif result.status == 429:
 		var retry_after: int = result.data.get("retry_after_seconds", 3)
 		status_label.text = "Too fast! Wait %ds..." % retry_after
@@ -154,4 +154,4 @@ func _calculate_timing_score() -> float:
 	return clampf(snappedf(score, 0.01), 0.0, 1.0)
 
 func _on_inventory_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/inventory/inventory.tscn")
+	await SceneTransition.iris_to("res://scenes/inventory/inventory.tscn")
