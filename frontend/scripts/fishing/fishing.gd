@@ -60,8 +60,6 @@ func _fit_background() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_handle_tap()
-	elif event is InputEventScreenTouch and event.pressed:
-		_handle_tap()
 
 func _handle_tap() -> void:
 	match current_phase:

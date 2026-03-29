@@ -83,9 +83,10 @@ mouse_filter = 2
 max_value = 1.0
 step = 0.001
 value = 0.0
-nine_patch_stretch = true
 texture_under = ExtResource("5")
 texture_progress = ExtResource("11")
+stretch_margin_left = 10
+stretch_margin_right = 10
 texture_filter = 0
 
 [node name="WaitPanel" type="PanelContainer" parent="GamePanels" unique_id=1145705502]
