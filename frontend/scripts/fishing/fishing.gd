@@ -18,13 +18,15 @@ var zone_start: float = 0.0
 var zone_end: float = 0.0
 
 @onready var cast_panel: PanelContainer = %CastPanel
-@onready var cast_bar: ProgressBar = %CastBar
+@onready var cast_bar: TextureRect = %CastBar
+@onready var cast_fill: ColorRect = %CastBar.get_node("Fill")
 
 @onready var wait_panel: PanelContainer = %WaitPanel
 @onready var wait_label: Label = %WaitLabel
 
 @onready var timing_panel: PanelContainer = %TimingPanel
-@onready var timing_bar: ProgressBar = %TimingBar
+@onready var timing_bar: TextureRect = %TimingBar
+@onready var timing_fill: ColorRect = %TimingBar.get_node("Fill")
 @onready var timing_zone_label: Label = %TimingZoneLabel
 
 @onready var status_label: Label = %StatusLabel
@@ -61,12 +63,12 @@ func _process(delta: float) -> void:
 			elif cast_position <= 0.0:
 				cast_position = 0.0
 				cast_direction = 1.0
-			cast_bar.value = cast_position * 100.0
+			cast_fill.anchor_right = 0.02 + cast_position * 0.96
 		Phase.TIMING:
 			timing_position += TIMING_SPEED * delta
 			if timing_position > 1.0:
 				timing_position = 0.0
-			timing_bar.value = timing_position * 100.0
+			timing_fill.anchor_right = 0.02 + timing_position * 0.96
 
 func _show_idle() -> void:
 	current_phase = Phase.IDLE
