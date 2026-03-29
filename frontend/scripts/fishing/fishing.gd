@@ -24,8 +24,7 @@ var idle_timer: float = 0.0
 var has_cast_before: bool = false
 var status_tween: Tween = null
 
-@onready var cast_bar: TextureRect = %CastBar
-@onready var cast_fill: ColorRect = %CastBar.get_node("Fill")
+@onready var cast_bar: TextureProgressBar = %CastBar
 
 @onready var wait_panel: PanelContainer = %WaitPanel
 @onready var wait_label: Label = %WaitLabel
@@ -83,7 +82,7 @@ func _process(delta: float) -> void:
 			elif cast_position <= 0.0:
 				cast_position = 0.0
 				cast_direction = 1.0
-			cast_fill.anchor_right = 0.02 + cast_position * 0.96
+			cast_bar.value = cast_position
 		Phase.IDLE:
 			if not status_label.visible:
 				idle_timer += delta

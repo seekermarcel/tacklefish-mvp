@@ -22,6 +22,7 @@ func _ready() -> void:
 	_fit_background()
 	get_tree().root.size_changed.connect(_fit_background)
 	AudioManager.play_music()
+	AudioManager.play_sounds()
 	_auto_register()
 
 func _fit_background() -> void:
