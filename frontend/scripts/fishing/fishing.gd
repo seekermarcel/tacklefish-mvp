@@ -18,7 +18,12 @@ const BITE_TIMEOUT: float = 5.0
 var pending_timing_score: float = 0.0
 var bite_tween: Tween = null
 
-@onready var cast_panel: PanelContainer = %CastPanel
+# Idle hint state
+const IDLE_HINT_DELAY: float = 5.0
+var idle_timer: float = 0.0
+var has_cast_before: bool = false
+var status_tween: Tween = null
+
 @onready var cast_bar: TextureRect = %CastBar
 @onready var cast_fill: ColorRect = %CastBar.get_node("Fill")
 
@@ -79,24 +84,50 @@ func _process(delta: float) -> void:
 				cast_position = 0.0
 				cast_direction = 1.0
 			cast_fill.anchor_right = 0.02 + cast_position * 0.96
+		Phase.IDLE:
+			if not status_label.visible:
+				idle_timer += delta
+				if idle_timer >= IDLE_HINT_DELAY:
+					status_label.text = "Tap anywhere to cast!"
+					status_label.modulate = Color(1, 1, 1, 0)
+					status_label.visible = true
+					if status_tween:
+						status_tween.kill()
+					status_tween = create_tween()
+					status_tween.tween_property(status_label, "modulate:a", 1.0, 0.8)
 
 func _show_idle() -> void:
 	current_phase = Phase.IDLE
-	cast_panel.visible = false
+	cast_bar.visible = false
 	wait_panel.visible = false
 	bite_label.visible = false
 	minigame_overlay.visible = false
 	bobber.visible = false
 	bobber.stop()
 	fishing_rod.play("idle")
-	status_label.text = "Tap anywhere to cast!"
+	idle_timer = 0.0
+	if not has_cast_before:
+		status_label.text = "Tap anywhere to cast!"
+		status_label.modulate = Color(1, 1, 1, 0)
+		status_label.visible = true
+		if status_tween:
+			status_tween.kill()
+		status_tween = create_tween()
+		status_tween.tween_property(status_label, "modulate:a", 1.0, 0.8)
+	else:
+		status_label.visible = false
 
 func _start_casting() -> void:
 	current_phase = Phase.CASTING
-	cast_panel.visible = true
+	has_cast_before = true
+	cast_bar.visible = true
 	cast_position = 0.0
 	cast_direction = 1.0
-	status_label.text = "Tap to lock power!"
+	if status_tween:
+		status_tween.kill()
+	status_label.text = "Cast Power"
+	status_label.modulate = Color.WHITE
+	status_label.visible = true
 
 func _lock_cast() -> void:
 	cast_power = cast_position
@@ -114,9 +145,11 @@ func _on_rod_throw_finished() -> void:
 
 func _start_waiting() -> void:
 	current_phase = Phase.WAITING
-	cast_panel.visible = false
-	wait_panel.visible = true
-	status_label.text = "Waiting for a bite..."
+	cast_bar.visible = false
+	wait_panel.visible = false
+	status_label.text = "Waiting..."
+	status_label.modulate = Color.WHITE
+	status_label.visible = true
 
 	var wait_time := lerpf(6.0, 2.0, cast_power) + randf_range(-0.5, 0.5)
 	wait_time = maxf(wait_time, 1.0)
@@ -128,7 +161,7 @@ func _start_waiting() -> void:
 func _start_bite() -> void:
 	current_phase = Phase.BITE
 	wait_panel.visible = false
-	status_label.text = ""
+	status_label.visible = false
 
 	bite_label.visible = true
 	bite_label.scale = Vector2.ONE
@@ -151,9 +184,7 @@ func _start_bite() -> void:
 		bobber.visible = false
 		bobber.stop()
 		fishing_rod.play("idle")
-		status_label.text = "Too slow! Fish escaped!"
-		await get_tree().create_timer(1.5).timeout
-		_show_idle()
+		_show_got_away()
 
 func _on_bite_tap() -> void:
 	var reaction_time := (Time.get_ticks_msec() / 1000.0) - bite_time
@@ -161,7 +192,7 @@ func _on_bite_tap() -> void:
 	if bite_tween:
 		bite_tween.kill()
 	bite_label.visible = false
-	status_label.text = "Score: %.0f%% - Fight!" % (pending_timing_score * 100.0)
+	status_label.visible = false
 	_start_minigame()
 
 func _start_minigame() -> void:
@@ -181,20 +212,30 @@ func _on_fish_escaped() -> void:
 	bobber.visible = false
 	bobber.stop()
 	fishing_rod.play("idle")
-	status_label.text = "Fish escaped!"
-	await get_tree().create_timer(1.5).timeout
+	_show_got_away()
+
+func _show_got_away() -> void:
+	if status_tween:
+		status_tween.kill()
+	status_label.text = "It got away!"
+	status_label.modulate = Color.WHITE
+	status_label.visible = true
+	await get_tree().create_timer(2.0).timeout
+	status_tween = create_tween()
+	status_tween.tween_property(status_label, "modulate:a", 0.0, 1.0)
+	await status_tween.finished
+	status_label.visible = false
 	_show_idle()
 
 func _on_catch() -> void:
 	current_phase = Phase.SENDING
-	status_label.text = "Reeling in..."
+	status_label.visible = false
 
 	var result := await Network.catch_fish(pending_timing_score)
 
 	if result.status == 200:
 		var data: Dictionary = result.data
 		if data.has("result") and data["result"] == "miss":
-			status_label.text = "No fish! %s" % data.get("reason", "")
 			await get_tree().create_timer(2.0).timeout
 			_show_idle()
 		else:
@@ -202,11 +243,9 @@ func _on_catch() -> void:
 			await SceneTransition.iris_to("res://scenes/fish_reveal/fish_reveal.tscn")
 	elif result.status == 429:
 		var retry_after: int = result.data.get("retry_after_seconds", 3)
-		status_label.text = "Too fast! Wait %ds..." % retry_after
 		await get_tree().create_timer(retry_after).timeout
 		_show_idle()
 	else:
-		status_label.text = "Error: %s" % result.data.get("error", "Unknown error")
 		await get_tree().create_timer(2.0).timeout
 		_show_idle()
 

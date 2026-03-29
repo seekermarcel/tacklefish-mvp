@@ -31,6 +31,7 @@ const FISH_PLACEHOLDER_COLORS := {
 	"Golden Primeval Perch": Color(1.0, 0.85, 0.3),
 }
 
+const PIXEL_FONT := preload("res://resources/fonts/pixel.ttf")
 const PAGE_SIZE := 50
 
 var all_fish: Array = []
@@ -71,6 +72,7 @@ func _create_filter_button(label_text: String, rarity: String) -> Button:
 	button.toggle_mode = true
 	button.custom_minimum_size = Vector2(0, 36)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.add_theme_font_override("font", PIXEL_FONT)
 
 	if rarity != "":
 		var color: Color = RARITY_COLORS.get(rarity, Color.WHITE)
@@ -232,6 +234,7 @@ func _create_fish_card(data: Dictionary) -> PanelContainer:
 	var name_label := Label.new()
 	name_label.text = species
 	name_label.add_theme_color_override("font_color", rarity_color)
+	name_label.add_theme_font_override("font", PIXEL_FONT)
 	name_label.add_theme_font_size_override("font_size", 14)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -241,6 +244,7 @@ func _create_fish_card(data: Dictionary) -> PanelContainer:
 	var edition_label := Label.new()
 	edition_label.text = "#%d / %d" % [data.get("edition_number", 0), data.get("edition_size", 0)]
 	edition_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
+	edition_label.add_theme_font_override("font", PIXEL_FONT)
 	edition_label.add_theme_font_size_override("font_size", 12)
 	edition_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(edition_label)
@@ -249,6 +253,7 @@ func _create_fish_card(data: Dictionary) -> PanelContainer:
 	var rarity_label := Label.new()
 	rarity_label.text = rarity.to_upper()
 	rarity_label.add_theme_color_override("font_color", rarity_color)
+	rarity_label.add_theme_font_override("font", PIXEL_FONT)
 	rarity_label.add_theme_font_size_override("font_size", 10)
 	rarity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(rarity_label)
@@ -260,18 +265,21 @@ func _create_fish_card(data: Dictionary) -> PanelContainer:
 
 	var size_label := Label.new()
 	size_label.text = size_variant.capitalize()
+	size_label.add_theme_font_override("font", PIXEL_FONT)
 	size_label.add_theme_font_size_override("font_size", 10)
 	size_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 	traits_hbox.add_child(size_label)
 
 	var sep := Label.new()
 	sep.text = " | "
+	sep.add_theme_font_override("font", PIXEL_FONT)
 	sep.add_theme_font_size_override("font_size", 10)
 	sep.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
 	traits_hbox.add_child(sep)
 
 	var color_label := Label.new()
 	color_label.text = color_variant.capitalize()
+	color_label.add_theme_font_override("font", PIXEL_FONT)
 	color_label.add_theme_font_size_override("font_size", 10)
 	color_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 	traits_hbox.add_child(color_label)

@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/inventory/inventory.gd" id="1"]
+[ext_resource type="FontFile" uid="uid://b1l34cherynj0" path="res://resources/fonts/pixel.ttf" id="2"]
 
 [node name="Inventory" type="Control"]
 layout_mode = 3
@@ -43,20 +44,25 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(60, 40)
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 16
 text = "Back"
 
 [node name="TitleLabel" type="Label" parent="MarginContainer/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(0.96, 0.94, 0.87, 1)
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 28
 text = "Collection"
 horizontal_alignment = 1
 
 [node name="CountLabel" type="Label" parent="MarginContainer/VBox/Header"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
 theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 14
 text = "0 / 0 fish"
 vertical_alignment = 1
 
@@ -65,6 +71,7 @@ unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(0, 40)
 placeholder_text = "Search species..."
+theme_override_fonts/font = ExtResource("2")
 theme_override_font_sizes/font_size = 16
 
 [node name="FilterScroll" type="ScrollContainer" parent="MarginContainer/VBox"]
@@ -81,6 +88,8 @@ theme_override_constants/separation = 6
 [node name="StatusLabel" type="Label" parent="MarginContainer/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.94, 0.87, 1)
+theme_override_fonts/font = ExtResource("2")
 theme_override_font_sizes/font_size = 14
 text = ""
 horizontal_alignment = 1
@@ -104,4 +113,6 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 2
 custom_minimum_size = Vector2(0, 40)
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 16
 text = "Load More"

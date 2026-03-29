@@ -228,7 +228,7 @@ func _draw() -> void:
 	# Timer text
 	var remaining := maxf(0.0, CATCH_DURATION - catch_timer)
 	var timer_text := "%.1fs" % remaining
-	var font := ThemeDB.fallback_font
+	var font: Font = preload("res://resources/fonts/pixel.ttf")
 	var font_size := 18
 	var text_size := font.get_string_size(timer_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
 	var text_pos := Vector2(arena_center.x - text_size.x / 2.0, arena_center.y - ARENA_RADIUS - 20.0)
