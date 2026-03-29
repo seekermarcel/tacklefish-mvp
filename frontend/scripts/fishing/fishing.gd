@@ -26,6 +26,7 @@ var bite_tween: Tween = null
 @onready var wait_label: Label = %WaitLabel
 
 @onready var background: AnimatedSprite2D = $Background
+@onready var fishing_rod: AnimatedSprite2D = %FishingRod
 @onready var bobber: AnimatedSprite2D = %Bobber
 @onready var status_label: Label = %StatusLabel
 @onready var bite_label: Label = %BiteLabel
@@ -98,14 +99,19 @@ func _start_casting() -> void:
 
 func _lock_cast() -> void:
 	cast_power = cast_position
+	fishing_rod.play("throw")
+	fishing_rod.animation_finished.connect(_on_rod_throw_finished, CONNECT_ONE_SHOT)
 	_start_waiting()
+
+func _on_rod_throw_finished() -> void:
+	fishing_rod.play("idle")
+	bobber.visible = true
+	bobber.play("idle")
 
 func _start_waiting() -> void:
 	current_phase = Phase.WAITING
 	cast_panel.visible = false
 	wait_panel.visible = true
-	bobber.visible = true
-	bobber.play("idle")
 	status_label.text = "Waiting for a bite..."
 
 	var wait_time := lerpf(6.0, 2.0, cast_power) + randf_range(-0.5, 0.5)

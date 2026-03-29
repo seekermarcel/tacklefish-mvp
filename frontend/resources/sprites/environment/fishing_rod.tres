@@ -1,0 +1,115 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://djwrkgk0deosk"]
+
+[ext_resource type="Texture2D" uid="uid://c0e3rmm2peq7f" path="res://resources/sprites/environment/fishing_rod_idle_sheet.png" id="1"]
+[ext_resource type="Texture2D" uid="uid://b38mupnmw8md1" path="res://resources/sprites/environment/fishing_rod_throw_sheet.png" id="2"]
+
+[sub_resource type="AtlasTexture" id="i0"]
+atlas = ExtResource("1")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="i1"]
+atlas = ExtResource("1")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="i2"]
+atlas = ExtResource("1")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="t0"]
+atlas = ExtResource("2")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="t1"]
+atlas = ExtResource("2")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="t2"]
+atlas = ExtResource("2")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="t3"]
+atlas = ExtResource("2")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="t4"]
+atlas = ExtResource("2")
+region = Rect2(512, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="t5"]
+atlas = ExtResource("2")
+region = Rect2(640, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="t6"]
+atlas = ExtResource("2")
+region = Rect2(768, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="t7"]
+atlas = ExtResource("2")
+region = Rect2(896, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="t8"]
+atlas = ExtResource("2")
+region = Rect2(1024, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="t9"]
+atlas = ExtResource("2")
+region = Rect2(1152, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="t10"]
+atlas = ExtResource("2")
+region = Rect2(1280, 0, 128, 128)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("i0")
+}, {
+"duration": 1.0,
+"texture": SubResource("i1")
+}, {
+"duration": 1.0,
+"texture": SubResource("i2")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("t0")
+}, {
+"duration": 1.0,
+"texture": SubResource("t1")
+}, {
+"duration": 1.0,
+"texture": SubResource("t2")
+}, {
+"duration": 1.0,
+"texture": SubResource("t3")
+}, {
+"duration": 1.0,
+"texture": SubResource("t4")
+}, {
+"duration": 1.0,
+"texture": SubResource("t5")
+}, {
+"duration": 1.0,
+"texture": SubResource("t6")
+}, {
+"duration": 1.0,
+"texture": SubResource("t7")
+}, {
+"duration": 1.0,
+"texture": SubResource("t8")
+}, {
+"duration": 1.0,
+"texture": SubResource("t9")
+}, {
+"duration": 1.0,
+"texture": SubResource("t10")
+}],
+"loop": false,
+"name": &"throw",
+"speed": 11.0
+}]

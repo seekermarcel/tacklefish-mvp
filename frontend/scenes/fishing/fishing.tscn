@@ -1,15 +1,15 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene format=3 uid="uid://bgfracisppyvm"]
 
-[ext_resource type="Script" path="res://scripts/fishing/fishing.gd" id="1"]
-[ext_resource type="Texture2D" path="res://resources/sprites/ui/icon_market_wood.png" id="2"]
-[ext_resource type="Texture2D" path="res://resources/sprites/ui/icon_inventory_wood.png" id="3"]
+[ext_resource type="Script" uid="uid://dyj0vidmnp4e8" path="res://scripts/fishing/fishing.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://d2ik1tk665frq" path="res://resources/sprites/ui/icon_market_wood.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://butt8q7h3mjdq" path="res://resources/sprites/ui/icon_inventory_wood.png" id="3"]
 [ext_resource type="SpriteFrames" path="res://resources/sprites/environment/fishing_background.tres" id="4"]
-[ext_resource type="Texture2D" path="res://resources/sprites/ui/progress_bar_frame.png" id="5"]
-[ext_resource type="Texture2D" path="res://resources/sprites/ui/progress_bar_fill.png" id="6"]
-[ext_resource type="Script" path="res://scripts/fishing/minigame_overlay.gd" id="7"]
+[ext_resource type="Texture2D" uid="uid://cjk6bp0ocljcp" path="res://resources/sprites/ui/progress_bar_frame.png" id="5"]
+[ext_resource type="Script" uid="uid://2wgbmbtk6pcf" path="res://scripts/fishing/minigame_overlay.gd" id="7"]
 [ext_resource type="SpriteFrames" path="res://resources/sprites/environment/bobber.tres" id="8"]
+[ext_resource type="SpriteFrames" path="res://resources/sprites/environment/fishing_rod.tres" id="9"]
 
-[node name="Fishing" type="Control"]
+[node name="Fishing" type="Control" unique_id=1381171853]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -19,13 +19,12 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1")
 
-[node name="Background" type="AnimatedSprite2D" parent="."]
+[node name="Background" type="AnimatedSprite2D" parent="." unique_id=868289538]
 sprite_frames = ExtResource("4")
 autoplay = "default"
 centered = false
-texture_filter = 0
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=981489194]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -38,51 +37,56 @@ theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="VBox" type="VBoxContainer" parent="MarginContainer"]
+[node name="VBox" type="VBoxContainer" parent="MarginContainer" unique_id=1539903326]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Header" type="HBoxContainer" parent="MarginContainer/VBox"]
+[node name="Header" type="HBoxContainer" parent="MarginContainer/VBox" unique_id=1361444306]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="TitleLabel" type="Label" parent="MarginContainer/VBox/Header"]
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBox/Header" unique_id=40598684]
 layout_mode = 2
-mouse_filter = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
 text = "Village Pond"
 
-[node name="Spacer1" type="Control" parent="MarginContainer/VBox"]
+[node name="Spacer1" type="Control" parent="MarginContainer/VBox" unique_id=1039799208]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 mouse_filter = 2
-custom_minimum_size = Vector2(0, 20)
 
-[node name="StatusLabel" type="Label" parent="MarginContainer/VBox"]
+[node name="StatusLabel" type="Label" parent="MarginContainer/VBox" unique_id=933276945]
 unique_name_in_owner = true
 layout_mode = 2
-mouse_filter = 2
 theme_override_font_sizes/font_size = 20
 text = "Tap anywhere to cast!"
 horizontal_alignment = 1
 
-[node name="Spacer2" type="Control" parent="MarginContainer/VBox"]
-layout_mode = 2
-mouse_filter = 2
+[node name="Spacer2" type="Control" parent="MarginContainer/VBox" unique_id=232963509]
 custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
 size_flags_vertical = 3
+mouse_filter = 2
 
-[node name="Bobber" type="AnimatedSprite2D" parent="."]
+[node name="FishingRod" type="AnimatedSprite2D" parent="." unique_id=1134195398]
 unique_name_in_owner = true
-visible = false
-position = Vector2(360, 880)
-scale = Vector2(1.5, 1.5)
+position = Vector2(620, 700)
+scale = Vector2(3, 3)
+sprite_frames = ExtResource("9")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="Bobber" type="AnimatedSprite2D" parent="." unique_id=581161694]
+unique_name_in_owner = true
+position = Vector2(422, 867)
+scale = Vector2(4, 4)
 sprite_frames = ExtResource("8")
 animation = &"idle"
-texture_filter = 0
 
-[node name="GamePanels" type="VBoxContainer" parent="."]
+[node name="GamePanels" type="VBoxContainer" parent="." unique_id=779827662]
 layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 16.0
@@ -93,36 +97,34 @@ grow_vertical = 2
 mouse_filter = 2
 alignment = 2
 
-[node name="CastPanel" type="PanelContainer" parent="GamePanels"]
+[node name="CastPanel" type="PanelContainer" parent="GamePanels" unique_id=92165768]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 mouse_filter = 2
 
-[node name="CastVBox" type="VBoxContainer" parent="GamePanels/CastPanel"]
+[node name="CastVBox" type="VBoxContainer" parent="GamePanels/CastPanel" unique_id=1759781650]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="CastLabel" type="Label" parent="GamePanels/CastPanel/CastVBox"]
+[node name="CastLabel" type="Label" parent="GamePanels/CastPanel/CastVBox" unique_id=213162046]
 layout_mode = 2
-mouse_filter = 2
 text = "Cast Power"
 horizontal_alignment = 1
 
-[node name="CastBar" type="TextureRect" parent="GamePanels/CastPanel/CastVBox"]
+[node name="CastBar" type="TextureRect" parent="GamePanels/CastPanel/CastVBox" unique_id=211159441]
 unique_name_in_owner = true
-layout_mode = 2
 custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
 size_flags_horizontal = 3
+mouse_filter = 2
 texture = ExtResource("5")
 expand_mode = 1
-stretch_mode = 0
-texture_filter = 0
-mouse_filter = 2
 
-[node name="Fill" type="ColorRect" parent="GamePanels/CastPanel/CastVBox/CastBar"]
+[node name="Fill" type="ColorRect" parent="GamePanels/CastPanel/CastVBox/CastBar" unique_id=719547963]
 unique_name_in_owner = true
 layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.02
 anchor_top = 0.37
 anchor_right = 0.02
@@ -130,25 +132,24 @@ anchor_bottom = 0.63
 mouse_filter = 2
 color = Color(0.886, 0.576, 0.161, 1)
 
-[node name="WaitPanel" type="PanelContainer" parent="GamePanels"]
+[node name="WaitPanel" type="PanelContainer" parent="GamePanels" unique_id=1145705502]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 mouse_filter = 2
 
-[node name="WaitVBox" type="VBoxContainer" parent="GamePanels/WaitPanel"]
+[node name="WaitVBox" type="VBoxContainer" parent="GamePanels/WaitPanel" unique_id=1972176147]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="WaitLabel" type="Label" parent="GamePanels/WaitPanel/WaitVBox"]
+[node name="WaitLabel" type="Label" parent="GamePanels/WaitPanel/WaitVBox" unique_id=1046144293]
 unique_name_in_owner = true
 layout_mode = 2
-mouse_filter = 2
 theme_override_font_sizes/font_size = 20
 text = "Waiting for a bite..."
 horizontal_alignment = 1
 
-[node name="BiteLabel" type="Label" parent="."]
+[node name="BiteLabel" type="Label" parent="." unique_id=1212212658]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -163,51 +164,48 @@ offset_right = 200.0
 offset_bottom = 60.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
+pivot_offset = Vector2(200, 60)
 theme_override_font_sizes/font_size = 72
 text = "BITE!"
 horizontal_alignment = 1
 vertical_alignment = 1
-pivot_offset = Vector2(200, 60)
 
-[node name="BottomBar" type="HBoxContainer" parent="."]
+[node name="BottomBar" type="HBoxContainer" parent="." unique_id=1817207542]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -120.0
 offset_left = 16.0
+offset_top = -120.0
 offset_right = -16.0
 offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="MarketButton" type="TextureButton" parent="BottomBar"]
+[node name="MarketButton" type="TextureButton" parent="BottomBar" unique_id=13482572]
 unique_name_in_owner = true
-layout_mode = 2
 custom_minimum_size = Vector2(160, 96)
+layout_mode = 2
 texture_normal = ExtResource("2")
-texture_filter = 0
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="Spacer" type="Control" parent="BottomBar"]
+[node name="Spacer" type="Control" parent="BottomBar" unique_id=688555632]
 layout_mode = 2
-mouse_filter = 2
 size_flags_horizontal = 3
+mouse_filter = 2
 
-[node name="InventoryButton" type="TextureButton" parent="BottomBar"]
+[node name="InventoryButton" type="TextureButton" parent="BottomBar" unique_id=1311900623]
 unique_name_in_owner = true
-layout_mode = 2
 custom_minimum_size = Vector2(160, 96)
+layout_mode = 2
 texture_normal = ExtResource("3")
-texture_filter = 0
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="MinigameOverlay" type="Control" parent="."]
+[node name="MinigameOverlay" type="Control" parent="." unique_id=1330330226]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
