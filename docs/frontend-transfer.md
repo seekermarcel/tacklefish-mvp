@@ -383,7 +383,7 @@ These are the exact string values the backend sends. Use them for mapping sprite
 |----|------|--------|-------------|
 | 1 | Perch | common | 1,000 |
 | 2 | Carp | common | 800 |
-| 3 | Sunfish | common | 600 |
+| 3 | Chub | common | 600 |
 | 4 | Brook Trout | uncommon | 400 |
 | 5 | Moonbass | uncommon | 300 |
 | 6 | Catfish | uncommon | 250 |

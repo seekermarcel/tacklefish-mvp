@@ -107,7 +107,7 @@ func seedAllMVPSpecies(t *testing.T, db *sql.DB) {
 		INSERT INTO fish_species (name, rarity, edition_size, zone) VALUES
 			('Perch',                'common',    1000, 1),
 			('Carp',                 'common',     800, 1),
-			('Sunfish',              'common',     600, 1),
+			('Chub',                 'common',     600, 1),
 			('Brook Trout',          'uncommon',   400, 1),
 			('Moonbass',             'uncommon',   300, 1),
 			('Catfish',              'uncommon',   250, 1),

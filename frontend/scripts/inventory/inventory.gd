@@ -21,7 +21,7 @@ const RARITY_BG := {
 const FISH_PLACEHOLDER_COLORS := {
 	"Perch": Color(0.6, 0.75, 0.4),
 	"Carp": Color(0.7, 0.55, 0.3),
-	"Sunfish": Color(1.0, 0.8, 0.2),
+	"Chub": Color(0.65, 0.7, 0.45),
 	"Brook Trout": Color(0.5, 0.7, 0.6),
 	"Moonbass": Color(0.4, 0.4, 0.75),
 	"Catfish": Color(0.5, 0.45, 0.4),

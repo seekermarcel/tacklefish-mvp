@@ -368,7 +368,7 @@ If these are validated, the next phase adds the marketplace and a second zone.
 |---|------|--------|-------------|-------|
 | 1 | Perch | Common | 1,000 | Starter fish, easy catch |
 | 2 | Carp | Common | 800 | Slow bite, wide timing zone |
-| 3 | Sunfish | Common | 600 | Quick bite, small but forgiving zone |
+| 3 | Chub | Common | 600 | Quick bite, small but forgiving zone |
 | 4 | Brook Trout | Uncommon | 400 | Moderate difficulty |
 | 5 | Moonbass | Uncommon | 300 | Only bites at dusk (future: MVP ignores time) |
 | 6 | Catfish | Uncommon | 250 | Long wait time, wide zone |
