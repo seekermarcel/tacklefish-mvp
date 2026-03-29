@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://ckmx8mkyu5dh3"]
 
 [ext_resource type="Script" uid="uid://cfvw8tfk0mjxq" path="res://scripts/main_menu/main_menu.gd" id="1"]
-[ext_resource type="Texture2D" path="res://resources/sprites/environment/title_background.png" id="2"]
+[ext_resource type="SpriteFrames" path="res://resources/sprites/environment/title_background.tres" id="2"]
 [ext_resource type="FontFile" uid="uid://b1l34cherynj0" path="res://resources/fonts/pixel.ttf" id="4"]
 [ext_resource type="Texture2D" path="res://resources/sprites/ui/button_play.png" id="5"]
 [ext_resource type="Texture2D" path="res://resources/sprites/ui/button_exit.png" id="6"]
@@ -15,9 +15,11 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="Background" type="Sprite2D" parent="." unique_id=486560466]
-texture = ExtResource("2")
+[node name="Background" type="AnimatedSprite2D" parent="." unique_id=486560466]
+sprite_frames = ExtResource("2")
+autoplay = "default"
 centered = false
+texture_filter = 0
 
 [node name="CenterContainer" type="VBoxContainer" parent="." unique_id=674162319]
 layout_mode = 1

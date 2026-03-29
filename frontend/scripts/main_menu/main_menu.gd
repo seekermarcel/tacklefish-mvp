@@ -5,10 +5,15 @@ extends Control
 # The fisher is roughly centered horizontally, ~70% down.
 const BG_FOCUS := Vector2(0.5, 0.70)
 
-@onready var background: Sprite2D = $Background
+@onready var background: AnimatedSprite2D = $Background
 @onready var start_button: TextureButton = %StartButton
 @onready var exit_button: TextureButton = %ExitButton
 @onready var status_label: Label = %StatusLabel
+
+func _get_frame_size() -> Vector2:
+	var frames := background.sprite_frames
+	var tex := frames.get_frame_texture("default", 0)
+	return Vector2(tex.get_size())
 
 func _ready() -> void:
 	start_button.disabled = true
@@ -20,7 +25,7 @@ func _ready() -> void:
 
 func _fit_background() -> void:
 	var viewport_size := get_viewport_rect().size
-	var tex_size := Vector2(background.texture.get_size())
+	var tex_size := _get_frame_size()
 	# Scale to cover the full viewport.
 	var scale_factor := maxf(viewport_size.x / tex_size.x, viewport_size.y / tex_size.y)
 	background.scale = Vector2(scale_factor, scale_factor)
@@ -43,7 +48,7 @@ func _on_start_pressed() -> void:
 	exit_button.disabled = true
 
 	var viewport_size := get_viewport_rect().size
-	var tex_size := Vector2(background.texture.get_size())
+	var tex_size := _get_frame_size()
 
 	# Zoom into the fisher + fade UI + iris close all at once (1.0s).
 	var zoom_target_scale := background.scale * 2.5
