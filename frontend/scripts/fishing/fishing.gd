@@ -26,6 +26,7 @@ var bite_tween: Tween = null
 @onready var wait_label: Label = %WaitLabel
 
 @onready var background: AnimatedSprite2D = $Background
+@onready var bobber: AnimatedSprite2D = %Bobber
 @onready var status_label: Label = %StatusLabel
 @onready var bite_label: Label = %BiteLabel
 @onready var minigame_overlay = %MinigameOverlay
@@ -84,6 +85,8 @@ func _show_idle() -> void:
 	wait_panel.visible = false
 	bite_label.visible = false
 	minigame_overlay.visible = false
+	bobber.visible = false
+	bobber.stop()
 	status_label.text = "Tap anywhere to cast!"
 
 func _start_casting() -> void:
@@ -101,6 +104,8 @@ func _start_waiting() -> void:
 	current_phase = Phase.WAITING
 	cast_panel.visible = false
 	wait_panel.visible = true
+	bobber.visible = true
+	bobber.play("idle")
 	status_label.text = "Waiting for a bite..."
 
 	var wait_time := lerpf(6.0, 2.0, cast_power) + randf_range(-0.5, 0.5)
@@ -133,6 +138,8 @@ func _start_bite() -> void:
 		if bite_tween:
 			bite_tween.kill()
 		bite_label.visible = false
+		bobber.visible = false
+		bobber.stop()
 		status_label.text = "Too slow! Fish escaped!"
 		await get_tree().create_timer(1.5).timeout
 		_show_idle()
@@ -153,10 +160,14 @@ func _start_minigame() -> void:
 
 func _on_fish_caught() -> void:
 	minigame_overlay.visible = false
+	bobber.visible = false
+	bobber.stop()
 	_on_catch()
 
 func _on_fish_escaped() -> void:
 	minigame_overlay.visible = false
+	bobber.visible = false
+	bobber.stop()
 	status_label.text = "Fish escaped!"
 	await get_tree().create_timer(1.5).timeout
 	_show_idle()

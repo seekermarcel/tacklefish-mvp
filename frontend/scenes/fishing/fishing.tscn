@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/fishing/fishing.gd" id="1"]
 [ext_resource type="Texture2D" path="res://resources/sprites/ui/icon_market_wood.png" id="2"]
@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" path="res://resources/sprites/ui/progress_bar_frame.png" id="5"]
 [ext_resource type="Texture2D" path="res://resources/sprites/ui/progress_bar_fill.png" id="6"]
 [ext_resource type="Script" path="res://scripts/fishing/minigame_overlay.gd" id="7"]
+[ext_resource type="SpriteFrames" path="res://resources/sprites/environment/bobber.tres" id="8"]
 
 [node name="Fishing" type="Control"]
 layout_mode = 3
@@ -70,6 +71,15 @@ layout_mode = 2
 mouse_filter = 2
 custom_minimum_size = Vector2(0, 40)
 size_flags_vertical = 3
+
+[node name="Bobber" type="AnimatedSprite2D" parent="."]
+unique_name_in_owner = true
+visible = false
+position = Vector2(360, 880)
+scale = Vector2(1.5, 1.5)
+sprite_frames = ExtResource("8")
+animation = &"idle"
+texture_filter = 0
 
 [node name="GamePanels" type="VBoxContainer" parent="."]
 layout_mode = 1
