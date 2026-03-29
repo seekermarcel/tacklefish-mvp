@@ -1,5 +1,6 @@
 extends Control
 ## Main fishing scene. Manages the cast -> wait -> timing -> catch flow.
+## Tap anywhere to cast/lock. Bottom corner buttons for inventory and market.
 
 enum Phase { IDLE, CASTING, WAITING, TIMING, SENDING }
 
@@ -18,7 +19,6 @@ var zone_end: float = 0.0
 
 @onready var cast_panel: PanelContainer = %CastPanel
 @onready var cast_bar: ProgressBar = %CastBar
-@onready var cast_button: Button = %CastButton
 
 @onready var wait_panel: PanelContainer = %WaitPanel
 @onready var wait_label: Label = %WaitLabel
@@ -26,16 +26,30 @@ var zone_end: float = 0.0
 @onready var timing_panel: PanelContainer = %TimingPanel
 @onready var timing_bar: ProgressBar = %TimingBar
 @onready var timing_zone_label: Label = %TimingZoneLabel
-@onready var catch_button: Button = %CatchButton
 
 @onready var status_label: Label = %StatusLabel
-@onready var back_button: Button = %BackButton
+@onready var market_button: TextureButton = %MarketButton
+@onready var inventory_button: TextureButton = %InventoryButton
 
 func _ready() -> void:
-	cast_button.pressed.connect(_on_cast_pressed)
-	catch_button.pressed.connect(_on_catch_pressed)
-	back_button.pressed.connect(_on_back_pressed)
+	inventory_button.pressed.connect(_on_inventory_pressed)
+	# Market button has no function yet.
 	_show_idle()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_handle_tap()
+	elif event is InputEventScreenTouch and event.pressed:
+		_handle_tap()
+
+func _handle_tap() -> void:
+	match current_phase:
+		Phase.IDLE:
+			_start_casting()
+		Phase.CASTING:
+			_lock_cast()
+		Phase.TIMING:
+			_on_catch()
 
 func _process(delta: float) -> void:
 	match current_phase:
@@ -56,24 +70,16 @@ func _process(delta: float) -> void:
 
 func _show_idle() -> void:
 	current_phase = Phase.IDLE
-	cast_panel.visible = true
+	cast_panel.visible = false
 	wait_panel.visible = false
 	timing_panel.visible = false
-	cast_button.text = "Cast Line"
-	cast_button.disabled = false
-	status_label.text = "Tap to cast!"
-
-func _on_cast_pressed() -> void:
-	if current_phase == Phase.IDLE:
-		_start_casting()
-	elif current_phase == Phase.CASTING:
-		_lock_cast()
+	status_label.text = "Tap anywhere to cast!"
 
 func _start_casting() -> void:
 	current_phase = Phase.CASTING
+	cast_panel.visible = true
 	cast_position = 0.0
 	cast_direction = 1.0
-	cast_button.text = "Lock Cast"
 	status_label.text = "Tap to lock power!"
 
 func _lock_cast() -> void:
@@ -103,14 +109,10 @@ func _start_timing() -> void:
 
 	timing_position = 0.0
 	timing_zone_label.text = "Zone: %d%% - %d%%" % [int(zone_start * 100), int(zone_end * 100)]
-	status_label.text = "Tap CATCH when the bar is in the zone!"
+	status_label.text = "Tap anywhere to catch!"
 
-func _on_catch_pressed() -> void:
-	if current_phase != Phase.TIMING:
-		return
-
+func _on_catch() -> void:
 	current_phase = Phase.SENDING
-	catch_button.disabled = true
 
 	var timing_score := _calculate_timing_score()
 	status_label.text = "Score: %.0f%% - Reeling in..." % (timing_score * 100.0)
@@ -124,7 +126,6 @@ func _on_catch_pressed() -> void:
 			await get_tree().create_timer(2.0).timeout
 			_show_idle()
 		else:
-			# Navigate to fish reveal scene with fish data.
 			GameState.set_meta("last_catch", data)
 			get_tree().change_scene_to_file("res://scenes/fish_reveal/fish_reveal.tscn")
 	elif result.status == 429:
@@ -137,18 +138,14 @@ func _on_catch_pressed() -> void:
 		await get_tree().create_timer(2.0).timeout
 		_show_idle()
 
-	catch_button.disabled = false
-
 func _calculate_timing_score() -> float:
 	var score: float
 	if timing_position >= zone_start and timing_position <= zone_end:
-		# Inside the zone: 0.5 - 1.0 based on proximity to center.
 		var zone_center := (zone_start + zone_end) / 2.0
 		var zone_half := (zone_end - zone_start) / 2.0
 		var distance_from_center := absf(timing_position - zone_center) / zone_half
 		score = 0.5 + 0.5 * (1.0 - distance_from_center)
 	else:
-		# Outside: 0.0 - 0.3 based on distance from zone edge.
 		var distance_to_zone := minf(
 			absf(timing_position - zone_start),
 			absf(timing_position - zone_end)
@@ -156,5 +153,5 @@ func _calculate_timing_score() -> float:
 		score = maxf(0.0, 0.3 - distance_to_zone)
 	return clampf(snappedf(score, 0.01), 0.0, 1.0)
 
-func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu/main_menu.tscn")
+func _on_inventory_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/inventory/inventory.tscn")

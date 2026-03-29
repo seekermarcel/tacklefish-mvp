@@ -199,8 +199,8 @@ Creates fish sprites (10 species + color variants), UI mockups, pond background,
 
 ### Phase 0 -- Project Setup (Day 1-2)
 
-- [ ] **Dev A:** Initialize Godot 4.x project with folder structure from Section 2
-- [ ] **Dev A:** Set up Godot MCP server connection for Claude Code assisted development
+- [x] **Dev A:** Initialize Godot 4.x project with folder structure from Section 2
+- [x] **Dev A:** Set up Godot MCP server connection for Claude Code assisted development
 - [x] **Dev B:** Initialize Go module (`go mod init`), create folder structure from Section 2
 - [x] **Dev B:** Write `001_init.sql` migration and DB init code with WAL mode
 - [x] **Dev B:** Seed fish_species table with 10 MVP species
@@ -215,10 +215,10 @@ Backend:
 - [x] **Dev B:** Add basic request logging and error handling
 
 Client:
-- [ ] **Dev A:** Create `auth.gd` autoload -- generate UUID on first launch, store in `user://`
-- [ ] **Dev A:** Create `network.gd` autoload -- HTTP client with JWT header injection
-- [ ] **Dev A:** Implement auto-registration on first launch (call `/auth/register`)
-- [ ] **Dev A:** Create `main_menu.tscn` -- simple start screen with "Fish!" button
+- [x] **Dev A:** Create `auth.gd` autoload -- generate UUID on first launch, store in `user://`
+- [x] **Dev A:** Create `network.gd` autoload -- HTTP client with JWT header injection
+- [x] **Dev A:** Implement auto-registration on first launch (call `/auth/register`)
+- [x] **Dev A:** Create `main_menu.tscn` -- simple start screen with "Fish!" button
 
 Design:
 - [ ] **Designer:** Finalize art style based on team vote
@@ -228,12 +228,12 @@ Design:
 ### Phase 2 -- Fishing Mechanic (Day 6-12)
 
 Client (core mechanic -- this is the most important phase):
-- [ ] **Dev A:** Build `fishing.tscn` -- pond background, water, bobber, cast button
-- [ ] **Dev A:** Implement cast power bar (`cast_bar.tscn`) -- filling/emptying loop, tap to lock
-- [ ] **Dev A:** Implement bite wait phase -- random timer (2-10s), bobber dip animation
-- [ ] **Dev A:** Build timing minigame (`catch_minigame.tscn`) -- moving indicator, target zone
-- [ ] **Dev A:** Send timing score to backend on catch attempt
-- [ ] **Dev A:** Handle miss (fish escapes) -- return to idle state
+- [x] **Dev A:** Build `fishing.tscn` -- pond background, water, bobber, cast button
+- [x] **Dev A:** Implement cast power bar -- filling/emptying loop, tap to lock (inline in fishing.tscn)
+- [x] **Dev A:** Implement bite wait phase -- random timer (2-6s)
+- [x] **Dev A:** Build timing minigame -- moving indicator, target zone (inline in fishing.tscn)
+- [x] **Dev A:** Send timing score to backend on catch attempt
+- [x] **Dev A:** Handle miss (pool depleted) -- return to idle state
 - [ ] **Dev A:** Use Godot MCP + Claude Code to iterate on game feel (bar speed, zone size, timing windows)
 
 Backend:
@@ -257,18 +257,18 @@ Design:
 ### Phase 3 -- Fish Reveal & Inventory (Day 13-18)
 
 Client:
-- [ ] **Dev A:** Build fish reveal screen (`fish_reveal.tscn`):
-  - [ ] Fish sprite (correct species + color variant)
-  - [ ] Edition number display ("Exemplar 47 / 1000")
-  - [ ] Rarity badge (color-coded: common/uncommon/rare/epic/legendary)
-  - [ ] Size and color trait labels
-  - [ ] "Keep" button (adds to inventory, returns to fishing)
-- [ ] **Dev A:** Build inventory screen (`inventory.tscn`):
-  - [ ] Scrollable list of caught fish (sprite thumbnail, name, edition number)
-  - [ ] Tap to open fish detail view
+- [x] **Dev A:** Build fish reveal screen (`fish_reveal.tscn`):
+  - [ ] Fish sprite (correct species + color variant) -- needs art assets
+  - [x] Edition number display ("#47 / 1000")
+  - [x] Rarity badge (color-coded: common/uncommon/rare/epic/legendary)
+  - [x] Size and color trait labels
+  - [x] "Cast Again" button (returns to fishing)
+- [x] **Dev A:** Build inventory screen (`inventory.tscn`):
+  - [x] Scrollable list of caught fish (name, edition number, traits)
+  - [ ] Tap to open fish detail view -- not yet wired
 - [ ] **Dev A:** Build fish detail view (`fish_detail.tscn`):
   - [ ] Full fish sprite, all traits, caught timestamp
-- [ ] **Dev A:** Implement navigation: Main Menu -> Fishing -> Reveal -> (Inventory | Fishing)
+- [x] **Dev A:** Implement navigation: Main Menu -> Fishing -> Reveal -> (Inventory | Fishing)
 
 Backend:
 - [x] **Dev B:** Implement `GET /player/inventory` -- return all fish for authenticated player

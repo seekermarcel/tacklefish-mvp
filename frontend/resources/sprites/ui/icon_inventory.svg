@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <!-- Backpack/bag icon for inventory -->
+  <rect x="8" y="16" width="32" height="26" rx="4" fill="none" stroke="#cfd8dc" stroke-width="3"/>
+  <path d="M16 16V12a8 8 0 0 1 16 0v4" fill="none" stroke="#cfd8dc" stroke-width="3" stroke-linecap="round"/>
+  <line x1="8" y1="26" x2="40" y2="26" stroke="#cfd8dc" stroke-width="2"/>
+</svg>

@@ -92,4 +92,4 @@ func _add_fish_entry(data: Dictionary) -> void:
 	fish_list.add_child(entry)
 
 func _on_back() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu/main_menu.tscn")
+	get_tree().change_scene_to_file("res://scenes/fishing/fishing.tscn")

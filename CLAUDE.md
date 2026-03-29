@@ -30,22 +30,40 @@ backend/               -- Go API server
   internal/db/         -- SQLite connection and migrations
   migrations/          -- SQL schema and seed data
   tests/               -- All backend tests (unit, distribution, stress)
+frontend/              -- Godot 4.x game client
+  scenes/              -- Scene files organized by feature
+    main_menu/         -- Start screen with auto-auth
+    fishing/           -- Cast bar, wait phase, timing minigame
+    fish_reveal/       -- Post-catch reveal screen
+    inventory/         -- Scrollable fish collection
+  scripts/
+    autoload/          -- Singletons: GameState, Auth, Network
+    main_menu/         -- Main menu logic
+    fishing/           -- Fishing flow controller
+    fish_reveal/       -- Reveal screen logic
+    inventory/         -- Inventory list + pagination
+  resources/           -- Fish species, sprites, UI assets
+testing-frontend/      -- Browser-based test client (HTML/JS/nginx)
 docs/                  -- Design documents
 references/            -- Source material
-docker-compose.yml     -- Run backend via Docker
+docker-compose.yml     -- Run backend + testing frontend via Docker
 ```
 
-## Running the Backend
+## Running the Project
 
 ```bash
-# Docker (recommended)
+# Backend + testing frontend via Docker (recommended)
 docker compose up
 
-# Local
+# Backend locally
 cd backend && go build -o tacklefish ./cmd/server/ && ./tacklefish
+
+# Godot client -- open in Godot editor, press F5 to run
+# Requires backend running on http://localhost:8080
 ```
 
-Server runs on `http://localhost:8080`. See `backend/README.md` for full API docs.
+Backend runs on `http://localhost:8080`. See `backend/README.md` for full API docs.
+Testing frontend runs on `http://localhost:3000`.
 
 ## Code Conventions
 
@@ -61,12 +79,18 @@ Server runs on `http://localhost:8080`. See `backend/README.md` for full API doc
 - Rate limiting via in-memory per-player tracking (`internal/auth/ratelimit.go`)
 - Tests live in `backend/tests/` (external test package), run with `go test ./tests/ -v`
 
-### Godot (Client) -- Not Yet Started
+### Godot (Client)
 
-- GDScript as the primary language
-- Singletons in `scripts/autoload/` for global state, networking, auth
-- Scenes organized by feature in `scenes/`
-- Fish species defined as Godot resources (`.tres`) in `resources/fish_species/`
+- **Godot 4.6** with GDScript, mobile renderer
+- Portrait orientation (720x1280 viewport, canvas_items stretch)
+- 3 autoload singletons registered in `project.godot`:
+  - `GameState` -- player ID, inventory, pool data
+  - `Auth` -- device UUID generation/persistence, JWT token storage
+  - `Network` -- HTTP client wrapping all API calls, auto-refresh on 401, rate limit handling
+- Scenes organized by feature in `scenes/`, scripts in matching `scripts/` subdirectories
+- Scenes use `unique_name_in_owner` (`%NodeName`) for node references
+- All game logic is server-side -- client only sends `timing_score` and displays results
+- Fish species defined as Godot resources (`.tres`) in `resources/fish_species/` (not yet created)
 
 ## Technical Decisions
 

@@ -13,9 +13,11 @@ Short sessions. No competitive pressure. Just the thrill of the next catch.
 ```
 tacklefish/
   backend/             -- Go API server (auth, catching, inventory)
+  frontend/            -- Godot 4.x game client (GDScript)
+  testing-frontend/    -- Browser-based test client (HTML/JS)
   docs/                -- Game design document, MVP plan
   references/          -- Original concept document (German)
-  docker-compose.yml   -- Run the backend with Docker
+  docker-compose.yml   -- Run backend + testing frontend with Docker
 ```
 
 ## Tech Stack
@@ -38,6 +40,13 @@ docker compose up
 ```
 
 The API server starts on `http://localhost:8080`. See [backend/README.md](backend/README.md) for full API documentation.
+The testing frontend starts on `http://localhost:3000`.
+
+### Run the Godot client
+
+Open `frontend/` in Godot 4.6+ and press F5. Requires the backend running on `localhost:8080`.
+
+The client connects automatically -- no login screen. It generates a device UUID on first launch, registers with the backend, and you can start fishing immediately.
 
 ### Run the tests
 
@@ -67,4 +76,4 @@ git config core.hooksPath .githooks
 
 ## Status
 
-Early development -- backend MVP is complete (all endpoints, rate limiting, tests), Godot client is next.
+Early development -- backend MVP is complete (all endpoints, rate limiting, tests). Godot client has initial scaffolding with working fishing flow (cast, wait, timing minigame, catch, reveal, inventory). Still needs art assets, polish, and game feel tuning.
