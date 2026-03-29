@@ -15,7 +15,7 @@ The MVP includes **only** what is needed to validate the core game loop and the 
 
 | Feature | Why it's in the MVP |
 |---------|-------------------|
-| Fishing minigame (cast, wait, catch) | The core mechanic -- must feel good |
+| Fishing minigame (cast, wait, bite reaction, fish fight, catch) | The core mechanic -- must feel good |
 | 1 zone (Village Pond) | Enough to test the loop |
 | 10 fish species (3 common, 3 uncommon, 2 rare, 1 epic, 1 legendary) | Tests the rarity system without needing hundreds of assets |
 | Edition system with numbered fish | The unique selling point -- must be validated |
@@ -49,39 +49,39 @@ The MVP includes **only** what is needed to validate the core game loop and the 
 ### Client (Godot)
 
 ```
-tacklefish-client/
+frontend/
   project.godot
   scenes/
     fishing/
-      fishing.tscn          -- Main gameplay scene
-      cast_bar.tscn          -- Power bar UI component
-      catch_minigame.tscn    -- Timing minigame overlay
+      fishing.tscn              -- Main gameplay scene (cast, wait, bite, minigame)
     fish_reveal/
-      fish_reveal.tscn       -- Post-catch reveal screen
+      fish_reveal.tscn          -- Post-catch reveal screen
     inventory/
-      inventory.tscn         -- Simple scrollable fish list
-      fish_detail.tscn       -- Single fish detail view
+      inventory.tscn            -- Collection book with search/filter/pagination
     main_menu/
-      main_menu.tscn         -- Start screen (auto-auth on load)
+      main_menu.tscn            -- Animated title screen with auto-auth
   scripts/
     autoload/
-      game_state.gd          -- Player state singleton
-      network.gd             -- HTTP client singleton (API calls)
-      auth.gd                -- Device ID + JWT management
+      game_state.gd             -- Player state singleton
+      network.gd                -- HTTP client singleton (API calls)
+      auth.gd                   -- Device ID + JWT management
+      scene_transition.gd       -- Iris wipe shader transitions
     fishing/
-      cast_controller.gd     -- Power bar logic
-      bite_controller.gd     -- Wait timer, bite detection
-      catch_minigame.gd      -- Timing indicator logic
-    fish/
-      fish_data.gd           -- Fish resource class
-    ui/
-      fish_card.gd           -- Reusable fish display widget
+      fishing.gd                -- Cast -> wait -> bite -> minigame -> catch flow
+      minigame_overlay.gd       -- Fish-fighting minigame (joystick + circle arena)
+    fish_reveal/
+      fish_reveal.gd            -- Reveal screen logic
+    inventory/
+      inventory.gd              -- Collection book with search/filter/pagination
+    main_menu/
+      main_menu.gd              -- Auto-register, zoom + iris wipe transition
   resources/
-    fish_species/            -- 10 species definitions (.tres)
+    fonts/pixel.ttf             -- Custom pixel art font
     sprites/
-      fish/                  -- 10 fish sprites + color variants
-      ui/                    -- Buttons, bars, backgrounds
-      environment/           -- Pond background, water, bobber
+      fish/                     -- Per-species sprites (catfish.png, chub.png, etc.)
+      environment/              -- Animated backgrounds, bobber, fishing rod
+      minigame/                 -- Minigame background and fish sprites
+      ui/                       -- Wooden buttons, progress bar, icons
 ```
 
 ### Backend (Go)
@@ -158,6 +158,14 @@ CREATE TABLE fish_instances (
 ```
 Client                              Server
   |                                    |
+  |-- Player casts (power bar)         |
+  |-- Wait for bite (2-6s)             |
+  |-- "BITE!" appears                  |
+  |-- Player taps (reaction time)      |
+  |-- timing_score = 1.0 - (reaction / 5.0)
+  |-- Fish-fighting minigame starts    |
+  |-- Player keeps fish in circle 10s  |
+  |                                    |
   |-- POST /fish/catch ------------->  |
   |   { timing_score: 0.82 }          |
   |                                    |-- Validate JWT
@@ -176,6 +184,8 @@ Client                              Server
   |                                    |
   |-- Show fish reveal screen          |
 ```
+
+**Note:** If the player fails to tap within 5s on bite, or the fish escapes the circle during the minigame, no server call is made and the player returns to idle.
 
 ---
 
@@ -231,8 +241,8 @@ Client (core mechanic -- this is the most important phase):
 - [x] **Dev A:** Build `fishing.tscn` -- pond background, water, bobber, cast button
 - [x] **Dev A:** Implement cast power bar -- filling/emptying loop, tap to lock (inline in fishing.tscn)
 - [x] **Dev A:** Implement bite wait phase -- random timer (2-6s, cast power affects duration)
-- [x] **Dev A:** Implement bite reaction -- "!" alert with 5s timeout, reaction time = timing score
-- [x] **Dev A:** Build fishing minigame overlay
+- [x] **Dev A:** Implement bite reaction -- "BITE!" alert with 5s timeout, reaction time = timing score
+- [x] **Dev A:** Build fish-fighting minigame overlay (joystick + circle arena, keep fish in circle 10s)
 - [x] **Dev A:** Send timing score to backend on catch attempt
 - [x] **Dev A:** Handle miss (pool depleted) -- return to idle state
 - [ ] **Dev A:** Use Godot MCP + Claude Code to iterate on game feel (bar speed, zone size, timing windows)
@@ -289,7 +299,7 @@ Design:
 
 - [ ] **Dev A:** Add placeholder SFX (cast splash, reel, catch chime, rare catch fanfare)
 - [x] **Dev A:** Add screen transitions (Animal Crossing iris wipe on all scene changes)
-- [ ] **Dev A:** Add bobber animation (idle float, dip on bite)
+- [x] **Dev A:** Add bobber animation (idle float, appears after rod throw animation)
 - [ ] **Dev A:** Add fish sprite animation on reveal (bounce/shimmer)
 - [ ] **Dev A:** Tune minigame difficulty per rarity tier via Godot MCP + Claude Code
 - [x] **Dev B:** Add rate limiting on `/fish/catch` (max 1 catch per 3 seconds)
@@ -368,11 +378,11 @@ If these are validated, the next phase adds the marketplace and a second zone.
 |---|------|--------|-------------|-------|
 | 1 | Perch | Common | 1,000 | Starter fish, easy catch |
 | 2 | Carp | Common | 800 | Slow bite, wide timing zone |
-| 3 | Chub | Common | 600 | Quick bite, small but forgiving zone |
+| 3 | Chub | Common | 600 | Quick bite, forgiving minigame |
 | 4 | Brook Trout | Uncommon | 400 | Moderate difficulty |
 | 5 | Moonbass | Uncommon | 300 | Only bites at dusk (future: MVP ignores time) |
-| 6 | Catfish | Uncommon | 250 | Long wait time, wide zone |
-| 7 | Ice Trout | Rare | 150 | Fast indicator, small zone |
-| 8 | Night Eel | Rare | 100 | Very fast indicator |
-| 9 | Obsidian Pufferfish | Epic | 30 | Tiny zone, tricky timing |
-| 10 | Golden Primeval Perch | Legendary | 10 | Smallest zone, fastest indicator |
+| 6 | Catfish | Uncommon | 250 | Long wait time, has sprite asset |
+| 7 | Ice Trout | Rare | 150 | Harder minigame difficulty |
+| 8 | Night Eel | Rare | 100 | Very challenging |
+| 9 | Obsidian Pufferfish | Epic | 30 | Tricky to land |
+| 10 | Golden Primeval Perch | Legendary | 10 | Hardest to catch |

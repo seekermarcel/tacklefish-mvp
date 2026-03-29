@@ -13,7 +13,7 @@ Tacklefish is a casual mobile fishing game. The player casts a line, plays a tim
 - `docs/game-design-document.md` -- Full GDD for deeper context
 
 **Current MVP scope for the client:**
-1. Fishing minigame (cast power bar, wait for bite, timing minigame)
+1. Fishing minigame (cast power bar, wait for bite, bite reaction, fish-fighting minigame)
 2. Fish reveal screen (species, edition number, rarity, traits)
 3. Simple inventory (scrollable list + detail view)
 4. Auto-auth on first launch (no login screen)
@@ -36,39 +36,40 @@ Tacklefish is a casual mobile fishing game. The player casts a line, plays a tim
 ## 3. Recommended Project Structure
 
 ```
-tacklefish-client/
+frontend/
   project.godot
   scenes/
     fishing/
-      fishing.tscn              -- Main gameplay scene
-      cast_bar.tscn             -- Power bar UI component
-      catch_minigame.tscn       -- Timing minigame overlay
+      fishing.tscn              -- Main gameplay scene (cast, wait, bite, minigame)
     fish_reveal/
       fish_reveal.tscn          -- Post-catch reveal screen
     inventory/
-      inventory.tscn            -- Simple scrollable fish list
-      fish_detail.tscn          -- Single fish detail view
+      inventory.tscn            -- Collection book with search/filter/pagination
     main_menu/
-      main_menu.tscn            -- Start screen (auto-auth on load)
+      main_menu.tscn            -- Animated title screen with auto-auth
   scripts/
     autoload/
       game_state.gd             -- Player state singleton
       network.gd                -- HTTP client singleton (API calls)
       auth.gd                   -- Device ID + JWT management
+      scene_transition.gd       -- Iris wipe shader transitions
     fishing/
-      cast_controller.gd        -- Power bar logic
-      bite_controller.gd        -- Wait timer, bite detection
-      catch_minigame.gd         -- Timing indicator logic
-    fish/
-      fish_data.gd              -- Fish resource class
-    ui/
-      fish_card.gd              -- Reusable fish display widget
+      fishing.gd                -- Cast -> wait -> bite -> minigame -> catch flow
+      minigame_overlay.gd       -- Fish-fighting minigame (joystick + circle arena)
+    fish_reveal/
+      fish_reveal.gd            -- Reveal screen logic
+    inventory/
+      inventory.gd              -- Collection book with search/filter/pagination
+    main_menu/
+      main_menu.gd              -- Auto-register, zoom + iris wipe transition
   resources/
-    fish_species/               -- 10 species definitions (.tres)
+    fonts/
+      pixel.ttf                 -- Custom pixel art font
     sprites/
-      fish/                     -- 10 fish sprites + color variants
-      ui/                       -- Buttons, bars, backgrounds
-      environment/              -- Pond background, water, bobber
+      fish/                     -- Per-species sprites (loaded by name: catfish.png, chub.png, etc.)
+      environment/              -- Animated backgrounds (spritesheets), bobber, fishing rod
+      minigame/                 -- Minigame background and fish sprites
+      ui/                       -- Wooden buttons, progress bar frame/fill, inventory/market icons
 ```
 
 ---
@@ -317,14 +318,19 @@ Main Menu
   v
 Fishing Scene
   |
-  +-- Cast Phase: Power bar fills/empties on loop. Player taps to lock distance.
-  |   (Client-only -- no server call)
+  +-- Cast Phase: Power bar oscillates. Player taps to lock power.
+  |   Higher power = shorter wait time. (Client-only -- no server call)
   |
-  +-- Wait Phase: Random timer 2-10 seconds. Bobber floats. On bite: bobber dips.
-  |   (Client-only -- no server call)
+  +-- Wait Phase: Random timer 2-6s (affected by cast power). Bobber appears
+  |   on water after rod throw animation. (Client-only -- no server call)
   |
-  +-- Minigame Phase: Moving indicator, player taps to stop in target zone.
-  |   Client computes timing_score (0.0-1.0) based on how close to center.
+  +-- Bite Phase: "BITE!" text pulses on screen. 5-second reaction window.
+  |   Player taps to react. Reaction time -> timing_score (0.0-1.0).
+  |   No tap within 5s = fish escapes, back to idle. (Client-only)
+  |
+  +-- Minigame Phase: Full-screen overlay with circle arena and swimming fish.
+  |   Player uses virtual joystick (appears at touch point) to keep fish in circle.
+  |   10s in circle = caught. 2s outside = fish escapes. (Client-only)
   |
   +-- Send: POST /fish/catch { timing_score }
   |
@@ -333,13 +339,17 @@ Fishing Scene
   v
 Fish Reveal Screen (if catch)
   |-- Display: species name, rarity badge, "Exemplar 73 / 150", size, color
-  |-- "Keep" button --> adds to local state, navigate to Fishing or Inventory
+  |-- Fish sprite loaded from res://resources/sprites/fish/{species_name}.png
+  |-- "Cast Again" button --> returns to Fishing
+  |-- "View Inventory" button --> navigates to Inventory
   |
   v
-Inventory (accessible from menu)
-  |-- GET /player/inventory?limit=20&offset=0
-  |-- Scrollable list with fish thumbnails
-  |-- Tap --> GET /player/inventory/{id} --> Fish Detail view
+Inventory (accessible from fishing scene bottom bar)
+  |-- GET /player/inventory?limit=50&offset=0
+  |-- 2-column grid of fish cards with rarity-colored borders
+  |-- Search bar + rarity filter buttons
+  |-- Fish sprites loaded by name convention, fallback to colored placeholders
+  |-- Load More pagination
 ```
 
 ---
@@ -396,21 +406,22 @@ These are the exact string values the backend sends. Use them for mapping sprite
 
 ## 8. Timing Score Calculation
 
-The backend expects a float from `0.0` to `1.0`. The client decides how to compute this. Suggested approach:
+The backend expects a float from `0.0` to `1.0`. The timing score is derived from the player's **bite reaction time**:
 
 ```
-Target zone has a center point.
-Indicator moves across the bar.
-Player taps to stop.
+When "BITE!" appears, a 5-second countdown starts.
+Player taps the screen as fast as possible.
 
-timing_score = 1.0 - (distance_from_center / max_possible_distance)
+timing_score = 1.0 - (reaction_time_seconds / 5.0)
 
-Clamp to 0.0 - 1.0.
+Clamp to 0.0 - 1.0, snap to 0.01 precision.
 ```
 
-A score of `1.0` means a perfect hit (center of zone). A score of `0.0` means the player was as far from the zone as possible.
+A score of `1.0` means an instant reaction. A score of `0.0` means the player took the full 5 seconds (and the fish would have escaped). If the player doesn't tap within 5 seconds, no server call is made -- the fish escapes.
 
-The backend uses this score to weight rarity rolls:
+After the bite reaction, the player must also win the **fish-fighting minigame** (keep fish in circle for 10 seconds using a virtual joystick). If the fish escapes the circle, no server call is made. The minigame difficulty is random per catch and does not affect the timing_score.
+
+The backend uses the timing score to weight rarity rolls:
 
 | Rarity | Score 0.0 | Score 1.0 |
 |--------|-----------|-----------|

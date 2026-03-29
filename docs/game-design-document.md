@@ -30,35 +30,43 @@ Tacklefish is a relaxed mobile fishing game with a Stardew Valley-like feel, des
 ## 2. Core Game Loop
 
 ```
-1. Cast Line        --> Hold-and-release power bar determines cast distance
-2. Wait & Observe   --> Fish approaches the bait (ambient waiting phase)
-3. Timing Minigame  --> Keep needle in zone / tap at the right moment
-4. Catch Fish       --> Rarity & quality depend on timing precision
-5. Reveal Fish Pass --> Species, edition number, size, pattern, traits
-6. Decide           --> Keep / Trade / Sell / Release
-7. Cast Again       --> Loop restarts
+1. Cast Line        --> Power bar oscillates, tap to lock cast power
+2. Wait & Observe   --> Fish approaches the bait (ambient waiting phase, duration affected by cast power)
+3. Bite!            --> "BITE!" alert appears, player must tap within 5 seconds
+4. Reaction Score   --> Faster reaction = higher timing_score (affects rarity odds)
+5. Fish Fight       --> Joystick minigame: keep fish inside circle arena for 10 seconds
+6. Catch / Escape   --> Win minigame = catch, lose = fish escapes
+7. Reveal Fish Pass --> Species, edition number, size, pattern, traits
+8. Decide           --> Keep / Trade / Sell / Release
+9. Cast Again       --> Loop restarts
 ```
 
 ### Cast Mechanic
 
 - A power bar fills and empties on loop
-- Player taps to lock in cast distance
-- Longer casts reach deeper water with rarer fish pools
-- Upgraded rods increase maximum cast distance
+- Player taps to lock in cast power
+- Higher cast power reduces bite wait time (full power ~2s, zero power ~6s)
+- Animated fishing rod plays a throw animation on cast
 
-### Timing Minigame
+### Bite Reaction
 
-- A moving indicator must be stopped inside a shrinking target zone
-- Better timing = higher quality catch (size, traits, rarity bonus)
-- Different fish species have different minigame patterns (speed, zone size)
-- Rare fish have faster, smaller zones -- harder to land perfectly
+- After casting, a random wait timer runs (2-6 seconds, affected by cast power)
+- Visual cue: animated bobber appears on water surface after rod throw animation
+- "BITE!" text appears with a pulsing animation
+- Player must tap within 5 seconds or the fish escapes
+- Reaction time determines timing_score: instant tap = 1.0, 5s = 0.0 (linear)
+- timing_score affects rarity odds on the backend (faster reaction = better rarity chances)
 
-### Bite Mechanics
+### Fish-Fighting Minigame
 
-- After casting, a random wait timer runs (2-15 seconds)
-- Visual and haptic cues signal a bite (bobber dip, vibration)
-- Player must react within a short window or the fish escapes
-- Bait type influences wait time and species probability
+- After tapping on bite, a full-screen overlay appears with a circular arena
+- A stylized fish swims randomly inside the arena, changing direction on a timer
+- Player uses a virtual joystick (appears wherever they touch the screen) to pull the fish back
+- The fish must stay inside the circle for 10 seconds to be caught
+- If the fish escapes the circle for 2 continuous seconds, it gets away
+- Difficulty accelerates over the 10 seconds: fish moves faster and changes direction more erratically
+- Each catch attempt has a random difficulty level (independent of fish rarity)
+- Arena displays a progress arc showing time remaining and a red warning flash when fish is outside
 
 ---
 

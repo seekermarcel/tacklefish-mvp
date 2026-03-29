@@ -33,19 +33,21 @@ backend/               -- Go API server
 frontend/              -- Godot 4.6 game client
   scenes/              -- Scene files organized by feature
     main_menu/         -- Animated title screen with play/exit buttons
-    fishing/           -- Tap-anywhere fishing: cast, wait, timing minigame
+    fishing/           -- Tap-anywhere fishing: cast, wait, bite reaction, fish-fighting minigame
     fish_reveal/       -- Post-catch reveal screen
     inventory/         -- Collection book with search, filters, fish cards
   scripts/
     autoload/          -- Singletons: GameState, Auth, Network, SceneTransition
     main_menu/         -- Auto-register, zoom + iris wipe transition
-    fishing/           -- Cast -> wait -> timing -> catch flow
+    fishing/           -- Cast -> wait -> bite reaction -> fish-fighting minigame -> catch flow
     fish_reveal/       -- Reveal screen logic
     inventory/         -- Collection book with search/filter/pagination
   resources/
     fonts/             -- Pixel art font
     sprites/
-      environment/     -- Title background (animated), fishing pond background
+      environment/     -- Title background (animated), fishing pond background (animated spritesheet), bobber, fishing rod
+      fish/            -- Per-species fish sprites (loaded by name convention)
+      minigame/        -- Fish-fighting minigame background and fish sprites
       ui/              -- Wooden buttons, progress bar, inventory/market icons
 testing-frontend/      -- Browser-based test client (HTML/JS/nginx)
 docs/                  -- Design documents
@@ -130,7 +132,7 @@ These have been decided and should not be changed without discussion:
 
 The current phase is MVP (see `docs/mvp.md`). Only these features matter right now:
 
-1. Fishing minigame (cast, wait, catch)
+1. Fishing minigame (cast, wait, bite reaction, fish-fighting minigame, catch)
 2. 1 zone (Village Pond), 10 fish species
 3. Edition system with numbered fish
 4. Fish reveal screen
