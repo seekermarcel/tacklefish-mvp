@@ -207,6 +207,7 @@ func _create_fish_card(data: Dictionary) -> PanelContainer:
 			"large": base_size = 72.0
 			"giant": base_size = 80.0
 		texture_rect.custom_minimum_size = Vector2(base_size * 1.6, base_size)
+		texture_rect.modulate = _color_variant_modulate(color_variant)
 		sprite_container.add_child(texture_rect)
 	else:
 		var fish_sprite := ColorRect.new()
@@ -285,6 +286,14 @@ func _create_fish_card(data: Dictionary) -> PanelContainer:
 	traits_hbox.add_child(color_label)
 
 	return card
+
+static func _color_variant_modulate(color_variant: String) -> Color:
+	match color_variant:
+		"albino": return Color(1.5, 1.5, 1.7)
+		"melanistic": return Color(0.3, 0.3, 0.35)
+		"rainbow": return Color(1.2, 0.7, 1.1)
+		"neon": return Color(0.6, 1.5, 0.8)
+		_: return Color.WHITE
 
 func _on_back() -> void:
 	await SceneTransition.iris_to("res://scenes/fishing/fishing.tscn")
