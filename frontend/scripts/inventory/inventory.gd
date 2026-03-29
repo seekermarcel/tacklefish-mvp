@@ -160,9 +160,14 @@ func _create_fish_card(data: Dictionary) -> PanelContainer:
 	var rarity_color: Color = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
 	var bg_color: Color = RARITY_BG.get(rarity, RARITY_BG["common"])
 
-	# Card container.
+	# Card container — clickable.
 	var card := PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_on_card_pressed(data)
+	)
 
 	var style := StyleBoxFlat.new()
 	style.bg_color = bg_color
@@ -294,6 +299,10 @@ static func _color_variant_modulate(color_variant: String) -> Color:
 		"rainbow": return Color(1.2, 0.7, 1.1)
 		"neon": return Color(0.6, 1.5, 0.8)
 		_: return Color.WHITE
+
+func _on_card_pressed(data: Dictionary) -> void:
+	GameState.set_meta("selected_fish", data)
+	await SceneTransition.iris_to("res://scenes/fish_detail/fish_detail.tscn")
 
 func _on_back() -> void:
 	await SceneTransition.iris_to("res://scenes/fishing/fishing.tscn")
