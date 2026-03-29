@@ -13,7 +13,7 @@ const ESCAPE_DURATION: float = 2.0
 # Joystick
 const JOYSTICK_MAX_RADIUS: float = 80.0
 const JOYSTICK_DEAD_ZONE: float = 10.0
-const PULL_FORCE: float = 180.0
+const PULL_FORCE: float = 400.0
 
 # Fish movement base values (scaled by difficulty and progress)
 const BASE_SPEED_MIN: float = 60.0

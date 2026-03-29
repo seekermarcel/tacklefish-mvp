@@ -183,42 +183,50 @@ func _create_fish_card(data: Dictionary) -> PanelContainer:
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	card.add_child(vbox)
 
-	# Placeholder fish sprite.
+	# Fish sprite or placeholder.
 	var sprite_container := CenterContainer.new()
 	sprite_container.custom_minimum_size = Vector2(0, 80)
 	vbox.add_child(sprite_container)
 
-	var fish_sprite := ColorRect.new()
-	var fish_color: Color = FISH_PLACEHOLDER_COLORS.get(species, Color(0.5, 0.5, 0.5))
-
-	# Apply color variant tint.
-	var color_variant: String = data.get("color_variant", "normal")
-	match color_variant:
-		"albino":
-			fish_color = fish_color.lightened(0.6)
-		"melanistic":
-			fish_color = fish_color.darkened(0.6)
-		"rainbow":
-			fish_color = Color(0.9, 0.5, 0.8)
-		"neon":
-			fish_color = fish_color.lightened(0.3)
-			fish_color.s = 1.0
-
-	# Size based on size_variant.
-	var base_size := 40.0
+	var sprite_path := "res://resources/sprites/fish/%s.png" % species.to_lower().replace(" ", "_")
 	var size_variant: String = data.get("size_variant", "normal")
-	match size_variant:
-		"mini":
-			base_size = 28.0
-		"large":
-			base_size = 52.0
-		"giant":
-			base_size = 64.0
+	var color_variant: String = data.get("color_variant", "normal")
 
-	fish_sprite.color = fish_color
-	fish_sprite.custom_minimum_size = Vector2(base_size * 1.6, base_size)
-	# Round the placeholder a bit using a clip.
-	sprite_container.add_child(fish_sprite)
+	if ResourceLoader.exists(sprite_path):
+		var texture_rect := TextureRect.new()
+		texture_rect.texture = load(sprite_path)
+		texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+
+		var base_size := 60.0
+		match size_variant:
+			"mini": base_size = 44.0
+			"large": base_size = 72.0
+			"giant": base_size = 80.0
+		texture_rect.custom_minimum_size = Vector2(base_size * 1.6, base_size)
+		sprite_container.add_child(texture_rect)
+	else:
+		var fish_sprite := ColorRect.new()
+		var fish_color: Color = FISH_PLACEHOLDER_COLORS.get(species, Color(0.5, 0.5, 0.5))
+
+		match color_variant:
+			"albino": fish_color = fish_color.lightened(0.6)
+			"melanistic": fish_color = fish_color.darkened(0.6)
+			"rainbow": fish_color = Color(0.9, 0.5, 0.8)
+			"neon":
+				fish_color = fish_color.lightened(0.3)
+				fish_color.s = 1.0
+
+		var base_size := 40.0
+		match size_variant:
+			"mini": base_size = 28.0
+			"large": base_size = 52.0
+			"giant": base_size = 64.0
+
+		fish_sprite.color = fish_color
+		fish_sprite.custom_minimum_size = Vector2(base_size * 1.6, base_size)
+		sprite_container.add_child(fish_sprite)
 
 	# Species name.
 	var name_label := Label.new()
