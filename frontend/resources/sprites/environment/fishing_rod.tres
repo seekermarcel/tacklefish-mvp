@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://c0e3rmm2peq7f" path="res://resources/sprites/environment/fishing_rod_idle_sheet.png" id="1"]
 [ext_resource type="Texture2D" uid="uid://b38mupnmw8md1" path="res://resources/sprites/environment/fishing_rod_throw_sheet.png" id="2"]
+[ext_resource type="Texture2D" path="res://resources/sprites/environment/fishing_rod_waiting_sheet.png" id="3"]
 
 [sub_resource type="AtlasTexture" id="i0"]
 atlas = ExtResource("1")
@@ -59,6 +60,18 @@ region = Rect2(1152, 0, 128, 128)
 atlas = ExtResource("2")
 region = Rect2(1280, 0, 128, 128)
 
+[sub_resource type="AtlasTexture" id="w0"]
+atlas = ExtResource("3")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="w1"]
+atlas = ExtResource("3")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="w2"]
+atlas = ExtResource("3")
+region = Rect2(256, 0, 128, 128)
+
 [resource]
 animations = [{
 "frames": [{
@@ -112,4 +125,18 @@ animations = [{
 "loop": false,
 "name": &"throw",
 "speed": 11.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("w0")
+}, {
+"duration": 1.0,
+"texture": SubResource("w1")
+}, {
+"duration": 1.0,
+"texture": SubResource("w2")
+}],
+"loop": true,
+"name": &"waiting",
+"speed": 4.0
 }]

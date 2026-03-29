@@ -88,6 +88,7 @@ func _show_idle() -> void:
 	minigame_overlay.visible = false
 	bobber.visible = false
 	bobber.stop()
+	fishing_rod.play("idle")
 	status_label.text = "Tap anywhere to cast!"
 
 func _start_casting() -> void:
@@ -100,11 +101,14 @@ func _start_casting() -> void:
 func _lock_cast() -> void:
 	cast_power = cast_position
 	fishing_rod.play("throw")
-	fishing_rod.animation_finished.connect(_on_rod_throw_finished, CONNECT_ONE_SHOT)
+	fishing_rod.animation_finished.connect(_on_rod_throw_finished)
 	_start_waiting()
 
 func _on_rod_throw_finished() -> void:
-	fishing_rod.play("idle")
+	if fishing_rod.animation != &"throw":
+		return
+	fishing_rod.animation_finished.disconnect(_on_rod_throw_finished)
+	fishing_rod.play("waiting")
 	bobber.visible = true
 	bobber.play("idle")
 
@@ -146,6 +150,7 @@ func _start_bite() -> void:
 		bite_label.visible = false
 		bobber.visible = false
 		bobber.stop()
+		fishing_rod.play("idle")
 		status_label.text = "Too slow! Fish escaped!"
 		await get_tree().create_timer(1.5).timeout
 		_show_idle()
@@ -168,12 +173,14 @@ func _on_fish_caught() -> void:
 	minigame_overlay.visible = false
 	bobber.visible = false
 	bobber.stop()
+	fishing_rod.play("idle")
 	_on_catch()
 
 func _on_fish_escaped() -> void:
 	minigame_overlay.visible = false
 	bobber.visible = false
 	bobber.stop()
+	fishing_rod.play("idle")
 	status_label.text = "Fish escaped!"
 	await get_tree().create_timer(1.5).timeout
 	_show_idle()
