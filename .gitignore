@@ -2,11 +2,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,git,go
 
 ### Git ###
-# Created by git for backups. To disable backups in Git:
-# $ git config --global mergetool.keepBackup false
 *.orig
-
-# Created by git when using merge tools for conflicts
 *.BACKUP.*
 *.BASE.*
 *.LOCAL.*
@@ -17,26 +13,13 @@
 *_REMOTE_*.txt
 
 ### Go ###
-# If you prefer the allow list template instead of the deny list, see community template:
-# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
-# Binaries for programs and plugins
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-
-# Test binary, built with `go test -c`
 *.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
-# Go workspace file
 go.work
 
 ### VisualStudioCode ###
@@ -46,17 +29,10 @@ go.work
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
-
-# Local History for Visual Studio Code
 .history/
-
-# Built Visual Studio Code Extensions
-*.vsix
-
-### VisualStudioCode Patch ###
-# Ignore all local history of files
 .history
 .ionide
+*.vsix
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,git,go
 
@@ -78,15 +54,97 @@ coverage.html
 docker-compose.override.yml
 
 ### Godot ###
-# Godot 4.x
+# Godot 4.x editor data
 .godot/
-*.import
+
+# Godot 3.x import cache
+.import/
+
+# Export configuration (contains local paths)
+export.cfg
+export_presets.cfg
 
 # Exported builds
 export/
 *.apk
 *.aab
 *.ipa
+
+# Imported translations (auto-generated from CSV)
+*.translation
+
+# Mono-specific
+.mono/
+data_*/
+mono_crash.*.json
+
+# Godot MCP temp files
+godot_mcp_test_write.tmp
+
+### Android ###
+.gradle/
+build/
+local.properties
+*.log
+captures/
+.externalNativeBuild/
+.externalNativeBuild
+.cxx/
+output.json
+*.hprof
+gen-external-apklibs
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+.gradle
+.signing/
+proguard/
+obj/
+/*/build/
+/*/local.properties
+/*/out
+/*/*/build
+/*/*/production
+.navigation/
+*.ipr
+*~
+*.swp
+.mtj.tmp/
+*.war
+*.ear
+hs_err_pid*
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services
+google-services.json
+
+### IntelliJ / Android Studio ###
+*.iml
+*.iws
+.idea/
+/out/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+atlassian-ide-plugin.xml
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+.idea_modules/
+!/gradle/wrapper/gradle-wrapper.jar
+
+# Legacy Eclipse
+.classpath
+.project
+.cproject
+.settings/
 
 ### Environment ###
 .env
