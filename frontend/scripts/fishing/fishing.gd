@@ -1,8 +1,8 @@
 extends Control
-## Main fishing scene. Manages the cast -> wait -> timing -> catch flow.
-## Tap anywhere to cast/lock. Bottom corner buttons for inventory and market.
+## Main fishing scene. Manages the cast -> wait -> bite -> minigame -> catch flow.
+## Tap anywhere to cast/lock/react. Bottom corner buttons for inventory and market.
 
-enum Phase { IDLE, CASTING, WAITING, TIMING, SENDING }
+enum Phase { IDLE, CASTING, WAITING, BITE, MINIGAME, SENDING }
 
 var current_phase: Phase = Phase.IDLE
 
@@ -10,12 +10,13 @@ var current_phase: Phase = Phase.IDLE
 var cast_position: float = 0.0
 var cast_direction: float = 1.0
 const CAST_SPEED: float = 1.5
+var cast_power: float = 0.0
 
-# Timing minigame state
-var timing_position: float = 0.0
-const TIMING_SPEED: float = 1.0
-var zone_start: float = 0.0
-var zone_end: float = 0.0
+# Bite reaction state
+var bite_time: float = 0.0
+const BITE_TIMEOUT: float = 5.0
+var pending_timing_score: float = 0.0
+var bite_tween: Tween = null
 
 @onready var cast_panel: PanelContainer = %CastPanel
 @onready var cast_bar: TextureRect = %CastBar
@@ -24,18 +25,16 @@ var zone_end: float = 0.0
 @onready var wait_panel: PanelContainer = %WaitPanel
 @onready var wait_label: Label = %WaitLabel
 
-@onready var timing_panel: PanelContainer = %TimingPanel
-@onready var timing_bar: TextureRect = %TimingBar
-@onready var timing_fill: ColorRect = %TimingBar.get_node("Fill")
-@onready var timing_zone_label: Label = %TimingZoneLabel
-
 @onready var status_label: Label = %StatusLabel
+@onready var bite_label: Label = %BiteLabel
+@onready var minigame_overlay = %MinigameOverlay
 @onready var market_button: TextureButton = %MarketButton
 @onready var inventory_button: TextureButton = %InventoryButton
 
 func _ready() -> void:
 	inventory_button.pressed.connect(_on_inventory_pressed)
-	# Market button has no function yet.
+	minigame_overlay.fish_caught.connect(_on_fish_caught)
+	minigame_overlay.fish_escaped.connect(_on_fish_escaped)
 	_show_idle()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -50,8 +49,8 @@ func _handle_tap() -> void:
 			_start_casting()
 		Phase.CASTING:
 			_lock_cast()
-		Phase.TIMING:
-			_on_catch()
+		Phase.BITE:
+			_on_bite_tap()
 
 func _process(delta: float) -> void:
 	match current_phase:
@@ -64,17 +63,13 @@ func _process(delta: float) -> void:
 				cast_position = 0.0
 				cast_direction = 1.0
 			cast_fill.anchor_right = 0.02 + cast_position * 0.96
-		Phase.TIMING:
-			timing_position += TIMING_SPEED * delta
-			if timing_position > 1.0:
-				timing_position = 0.0
-			timing_fill.anchor_right = 0.02 + timing_position * 0.96
 
 func _show_idle() -> void:
 	current_phase = Phase.IDLE
 	cast_panel.visible = false
 	wait_panel.visible = false
-	timing_panel.visible = false
+	bite_label.visible = false
+	minigame_overlay.visible = false
 	status_label.text = "Tap anywhere to cast!"
 
 func _start_casting() -> void:
@@ -85,6 +80,7 @@ func _start_casting() -> void:
 	status_label.text = "Tap to lock power!"
 
 func _lock_cast() -> void:
+	cast_power = cast_position
 	_start_waiting()
 
 func _start_waiting() -> void:
@@ -93,33 +89,69 @@ func _start_waiting() -> void:
 	wait_panel.visible = true
 	status_label.text = "Waiting for a bite..."
 
-	var wait_time := randf_range(2.0, 6.0)
+	var wait_time := lerpf(6.0, 2.0, cast_power) + randf_range(-0.5, 0.5)
+	wait_time = maxf(wait_time, 1.0)
 	await get_tree().create_timer(wait_time).timeout
 
 	if current_phase == Phase.WAITING:
-		_start_timing()
+		_start_bite()
 
-func _start_timing() -> void:
-	current_phase = Phase.TIMING
+func _start_bite() -> void:
+	current_phase = Phase.BITE
 	wait_panel.visible = false
-	timing_panel.visible = true
+	status_label.text = ""
 
-	# Random zone position and width.
-	var zone_width := randf_range(0.10, 0.25)
-	zone_start = randf_range(0.10, 0.80 - zone_width)
-	zone_end = zone_start + zone_width
+	bite_label.visible = true
+	bite_label.scale = Vector2.ONE
+	bite_label.modulate = Color.WHITE
+	bite_time = Time.get_ticks_msec() / 1000.0
 
-	timing_position = 0.0
-	timing_zone_label.text = "Zone: %d%% - %d%%" % [int(zone_start * 100), int(zone_end * 100)]
-	status_label.text = "Tap anywhere to catch!"
+	# Pulse animation
+	if bite_tween:
+		bite_tween.kill()
+	bite_tween = create_tween().set_loops()
+	bite_tween.tween_property(bite_label, "scale", Vector2(1.15, 1.15), 0.3)
+	bite_tween.tween_property(bite_label, "scale", Vector2(1.0, 1.0), 0.3)
+
+	# 5s timeout
+	await get_tree().create_timer(BITE_TIMEOUT).timeout
+	if current_phase == Phase.BITE:
+		if bite_tween:
+			bite_tween.kill()
+		bite_label.visible = false
+		status_label.text = "Too slow! Fish escaped!"
+		await get_tree().create_timer(1.5).timeout
+		_show_idle()
+
+func _on_bite_tap() -> void:
+	var reaction_time := (Time.get_ticks_msec() / 1000.0) - bite_time
+	pending_timing_score = clampf(snappedf(1.0 - (reaction_time / BITE_TIMEOUT), 0.01), 0.0, 1.0)
+	if bite_tween:
+		bite_tween.kill()
+	bite_label.visible = false
+	status_label.text = "Score: %.0f%% - Fight!" % (pending_timing_score * 100.0)
+	_start_minigame()
+
+func _start_minigame() -> void:
+	current_phase = Phase.MINIGAME
+	minigame_overlay.visible = true
+	minigame_overlay.start_minigame()
+
+func _on_fish_caught() -> void:
+	minigame_overlay.visible = false
+	_on_catch()
+
+func _on_fish_escaped() -> void:
+	minigame_overlay.visible = false
+	status_label.text = "Fish escaped!"
+	await get_tree().create_timer(1.5).timeout
+	_show_idle()
 
 func _on_catch() -> void:
 	current_phase = Phase.SENDING
+	status_label.text = "Reeling in..."
 
-	var timing_score := _calculate_timing_score()
-	status_label.text = "Score: %.0f%% - Reeling in..." % (timing_score * 100.0)
-
-	var result := await Network.catch_fish(timing_score)
+	var result := await Network.catch_fish(pending_timing_score)
 
 	if result.status == 200:
 		var data: Dictionary = result.data
@@ -139,21 +171,6 @@ func _on_catch() -> void:
 		status_label.text = "Error: %s" % result.data.get("error", "Unknown error")
 		await get_tree().create_timer(2.0).timeout
 		_show_idle()
-
-func _calculate_timing_score() -> float:
-	var score: float
-	if timing_position >= zone_start and timing_position <= zone_end:
-		var zone_center := (zone_start + zone_end) / 2.0
-		var zone_half := (zone_end - zone_start) / 2.0
-		var distance_from_center := absf(timing_position - zone_center) / zone_half
-		score = 0.5 + 0.5 * (1.0 - distance_from_center)
-	else:
-		var distance_to_zone := minf(
-			absf(timing_position - zone_start),
-			absf(timing_position - zone_end)
-		)
-		score = maxf(0.0, 0.3 - distance_to_zone)
-	return clampf(snappedf(score, 0.01), 0.0, 1.0)
 
 func _on_inventory_pressed() -> void:
 	await SceneTransition.iris_to("res://scenes/inventory/inventory.tscn")
