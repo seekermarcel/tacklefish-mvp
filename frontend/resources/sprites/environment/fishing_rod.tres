@@ -90,12 +90,6 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("t0")
-}, {
-"duration": 1.0,
-"texture": SubResource("t1")
-}, {
-"duration": 1.0,
 "texture": SubResource("t2")
 }, {
 "duration": 1.0,
@@ -124,7 +118,7 @@ animations = [{
 }],
 "loop": false,
 "name": &"throw",
-"speed": 11.0
+"speed": 9.0
 }, {
 "frames": [{
 "duration": 1.0,
