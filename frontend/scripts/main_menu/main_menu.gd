@@ -47,31 +47,30 @@ func _on_start_pressed() -> void:
 	start_button.disabled = true
 	exit_button.disabled = true
 
-	# Calculate where the angler is on screen (UV coordinates for the iris).
 	var viewport_size := get_viewport_rect().size
 	var tex_size := Vector2(background.texture.get_size())
-	var angler_screen := background.position + BG_FOCUS * tex_size * background.scale
-	var angler_uv := angler_screen / viewport_size
 
-	# Zoom into the angler.
+	# Zoom + fade UI + iris close all at once (1.0s).
 	var zoom_target_scale := background.scale * 2.5
 	var zoom_target_pos := viewport_size * 0.5 - BG_FOCUS * tex_size * zoom_target_scale.x
 
-	var zoom_tween := create_tween().set_parallel(true)
-	zoom_tween.tween_property(background, "scale", zoom_target_scale, 0.8) \
-		.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
-	zoom_tween.tween_property(background, "position", zoom_target_pos, 0.8) \
-		.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
+	SceneTransition.prepare_close(Vector2(0.5, 0.5))
 
-	# Fade out the UI while zooming.
-	var ui_container := $CenterContainer
-	zoom_tween.tween_property(ui_container, "modulate:a", 0.0, 0.4) \
-		.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(background, "scale", zoom_target_scale, 1.0) \
+		.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(background, "position", zoom_target_pos, 1.0) \
+		.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+	tween.tween_property($CenterContainer, "modulate:a", 0.0, 0.3) \
+		.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(
+		SceneTransition._shader_material, "shader_parameter/radius", 0.0, 1.0
+	).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+	await tween.finished
 
-	await zoom_tween.finished
-
-	# Iris wipe centered on screen — the zoom already put the angler at center.
-	await SceneTransition.iris_to("res://scenes/fishing/fishing.tscn", Vector2(0.5, 0.5))
+	# Brief black, then scene change + iris open (1.0s).
+	await get_tree().create_timer(0.1).timeout
+	await SceneTransition.iris_open_with_scene("res://scenes/fishing/fishing.tscn", 1.0)
 
 func _on_exit_pressed() -> void:
 	get_tree().quit()
