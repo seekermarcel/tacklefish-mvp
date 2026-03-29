@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 GameState="*res://scripts/autoload/game_state.gd"
 Auth="*res://scripts/autoload/auth.gd"
 Network="*res://scripts/autoload/network.gd"
+SceneTransition="*res://scripts/autoload/scene_transition.gd"
 
 [display]
 
