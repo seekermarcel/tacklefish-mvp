@@ -2,7 +2,7 @@ extends Node
 ## HTTP client singleton. Wraps all backend API calls with auth header injection
 ## and automatic token refresh on 401.
 
-const BASE_URL := "http://localhost:8080"
+const BASE_URL := "http://192.168.2.167:8080"
 
 signal request_completed(result: Dictionary)
 

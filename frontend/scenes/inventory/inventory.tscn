@@ -5,6 +5,8 @@
 [ext_resource type="Texture2D" uid="uid://cmi00ah4vasqv" path="res://resources/sprites/ui/inventory_bg.png" id="3"]
 [ext_resource type="SpriteFrames" path="res://resources/sprites/ui/collection_opening.tres" id="4"]
 [ext_resource type="SpriteFrames" path="res://resources/sprites/ui/collection_closing.tres" id="5"]
+[ext_resource type="Texture2D" path="res://resources/sprites/ui/button_back.png" id="6"]
+[ext_resource type="Texture2D" path="res://resources/sprites/ui/button_search.png" id="7"]
 
 [node name="Inventory" type="Control" unique_id=1544968858]
 layout_mode = 3
@@ -76,39 +78,33 @@ theme_override_fonts/font = ExtResource("2")
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
 
-[node name="BackButton" type="Button" parent="." unique_id=1149314222]
+[node name="BackButton" type="TextureButton" parent="." unique_id=1149314222]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
-offset_left = 50.0
-offset_top = 155.0
-offset_right = 94.0
-offset_bottom = 188.0
-theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
-theme_override_colors/font_hover_color = Color(1, 0.9, 0.7, 1)
-theme_override_fonts/font = ExtResource("2")
-theme_override_font_sizes/font_size = 20
-text = "<"
-flat = true
+offset_left = 16.0
+offset_top = 24.0
+offset_right = 96.0
+offset_bottom = 80.0
+texture_normal = ExtResource("6")
+texture_filter = 0
+stretch_mode = 0
 
-[node name="SearchButton" type="Button" parent="." unique_id=1768943107]
+[node name="SearchButton" type="TextureButton" parent="." unique_id=1768943107]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -94.0
-offset_top = 155.0
-offset_right = -56.0
-offset_bottom = 188.0
+offset_left = -96.0
+offset_top = 24.0
+offset_right = -16.0
+offset_bottom = 80.0
 grow_horizontal = 0
-theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
-theme_override_colors/font_hover_color = Color(1, 0.9, 0.7, 1)
-theme_override_fonts/font = ExtResource("2")
-theme_override_font_sizes/font_size = 18
-text = "?"
-flat = true
+texture_normal = ExtResource("7")
+texture_filter = 0
+stretch_mode = 0
 
 [node name="CountLabel" type="Label" parent="." unique_id=10757536]
 unique_name_in_owner = true
@@ -118,9 +114,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -60.0
-offset_top = 160.0
+offset_top = 40.0
 offset_right = 60.0
-offset_bottom = 184.0
+offset_bottom = 64.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(0.65, 0.55, 0.4, 1)
 theme_override_fonts/font = ExtResource("2")
@@ -133,10 +129,10 @@ visible = false
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 50.0
-offset_top = 192.0
-offset_right = -56.0
-offset_bottom = 302.0
+offset_left = 16.0
+offset_top = 88.0
+offset_right = -16.0
+offset_bottom = 198.0
 grow_horizontal = 2
 
 [node name="SearchVBox" type="VBoxContainer" parent="SearchPanel" unique_id=690848518]
