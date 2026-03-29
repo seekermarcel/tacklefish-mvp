@@ -27,9 +27,10 @@ AudioManager="*res://scripts/autoload/audio_manager.gd"
 [display]
 
 window/size/viewport_width=720
-window/size/viewport_height=1280
+window/size/viewport_height=1600
 window/stretch/mode="canvas_items"
-window/stretch/aspect="expand"
+window/stretch/aspect="keep_width"
+window/stretch/scale_mode="fractional"
 window/handheld/orientation=1
 
 [input]
@@ -45,5 +46,6 @@ interact={
 
 textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="mobile"
-textures/vram_compression/import_s3tc_bptc=true
 textures/vram_compression/import_etc2_astc=true
+2d/snap/snap_2d_transforms_to_pixel=true
+2d/snap/snap_2d_vertices_to_pixel=true

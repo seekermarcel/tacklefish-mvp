@@ -46,7 +46,7 @@ vertical_alignment = 1
 
 [node name="FishingRod" type="AnimatedSprite2D" parent="." unique_id=1134195398]
 unique_name_in_owner = true
-position = Vector2(620, 700)
+position = Vector2(620, 1020)
 scale = Vector2(3, 3)
 sprite_frames = ExtResource("9")
 animation = &"idle"
@@ -54,7 +54,7 @@ autoplay = "idle"
 
 [node name="Bobber" type="AnimatedSprite2D" parent="." unique_id=581161694]
 unique_name_in_owner = true
-position = Vector2(422, 867)
+position = Vector2(422, 1187)
 scale = Vector2(4, 4)
 sprite_frames = ExtResource("8")
 animation = &"idle"
