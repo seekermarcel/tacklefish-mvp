@@ -6,8 +6,8 @@ extends Control
 const BG_FOCUS := Vector2(0.75, 0.80)
 
 @onready var background: Sprite2D = $Background
-@onready var start_button: Button = %StartButton
-@onready var exit_button: Button = %ExitButton
+@onready var start_button: TextureButton = %StartButton
+@onready var exit_button: TextureButton = %ExitButton
 @onready var status_label: Label = %StatusLabel
 
 func _ready() -> void:
