@@ -18,7 +18,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.059, 0.098, 0.137, 1)
+color = Color(0.059, 0.078, 0.118, 1)
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -27,51 +27,81 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
 
 [node name="VBox" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="Header" type="HBoxContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
 
+[node name="BackButton" type="Button" parent="MarginContainer/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(60, 40)
+text = "Back"
+
 [node name="TitleLabel" type="Label" parent="MarginContainer/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 24
-text = "Inventory"
+theme_override_font_sizes/font_size = 26
+text = "Collection"
+horizontal_alignment = 1
 
 [node name="CountLabel" type="Label" parent="MarginContainer/VBox/Header"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "(0 fish)"
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+text = "0 / 0 fish"
+vertical_alignment = 1
 
-[node name="BackButton" type="Button" parent="MarginContainer/VBox/Header"]
+[node name="SearchInput" type="LineEdit" parent="MarginContainer/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Back"
+custom_minimum_size = Vector2(0, 40)
+placeholder_text = "Search species..."
+theme_override_font_sizes/font_size = 16
+
+[node name="FilterScroll" type="ScrollContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
+vertical_scroll_mode = 0
+
+[node name="FilterContainer" type="HBoxContainer" parent="MarginContainer/VBox/FilterScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
 
 [node name="StatusLabel" type="Label" parent="MarginContainer/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_override_font_sizes/font_size = 14
 text = ""
 horizontal_alignment = 1
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
 
-[node name="FishList" type="VBoxContainer" parent="MarginContainer/VBox/ScrollContainer"]
+[node name="FishGrid" type="GridContainer" parent="MarginContainer/VBox/ScrollContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
 
 [node name="LoadMoreButton" type="Button" parent="MarginContainer/VBox"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
 text = "Load More"
