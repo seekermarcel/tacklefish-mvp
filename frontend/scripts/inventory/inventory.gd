@@ -248,7 +248,7 @@ func _create_fish_card(data: Dictionary) -> PanelContainer:
 
 	# Edition number.
 	var edition_label := Label.new()
-	edition_label.text = "#%d / %d" % [data.get("edition_number", 0), data.get("edition_size", 0)]
+	edition_label.text = "%d / %d" % [data.get("edition_number", 0), data.get("edition_size", 0)]
 	edition_label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
 	edition_label.add_theme_font_override("font", PIXEL_FONT)
 	edition_label.add_theme_font_size_override("font_size", 12)

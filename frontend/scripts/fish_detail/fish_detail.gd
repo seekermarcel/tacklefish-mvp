@@ -26,7 +26,7 @@ func _display_fish(data: Dictionary) -> void:
 
 	species_label.text = data.get("species", "Unknown")
 
-	edition_label.text = "#%d / %d" % [
+	edition_label.text = "%d / %d" % [
 		data.get("edition_number", 0),
 		data.get("edition_size", 0),
 	]
