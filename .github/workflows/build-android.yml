@@ -84,7 +84,7 @@ jobs:
       - name: Build APK
         run: |
           mkdir -p frontend/export
-          godot --headless --export-debug "Android" frontend/export/tacklefish.apk --path frontend
+          godot --headless --export-debug "Android" export/tacklefish.apk --path frontend
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
