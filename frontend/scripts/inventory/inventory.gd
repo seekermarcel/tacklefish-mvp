@@ -480,7 +480,7 @@ func _create_fish_card(data: Dictionary) -> Control:
 	_anchor_rect(size_label, 0.10, 0.681, 0.90, 0.726)
 	card_wrapper.add_child(size_label)
 
-	# 5. Edition number (centered on dark bar 4: 0.749-0.837).
+	# 5. Edition number (centered on dark bar 5: 0.862-0.933).
 	var edition_label := Label.new()
 	edition_label.text = "#%d / %d" % [data.get("edition_number", 0), data.get("edition_size", 0)]
 	edition_label.add_theme_color_override("font_color", Color(0.85, 0.78, 0.65))
@@ -489,10 +489,10 @@ func _create_fish_card(data: Dictionary) -> Control:
 	edition_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	edition_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	edition_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_anchor_rect(edition_label, 0.10, 0.749, 0.90, 0.837)
+	_anchor_rect(edition_label, 0.10, 0.862, 0.90, 0.933)
 	card_wrapper.add_child(edition_label)
 
-	# 6. Rarity icon (centered on dark bar 5: 0.862-0.933).
+	# 6. Rarity icon (centered on dark bar 4: 0.749-0.837).
 	var rarity_tex: Texture2D = RARITY_ICONS.get(rarity)
 	if rarity_tex:
 		var rarity_icon := TextureRect.new()
@@ -501,7 +501,7 @@ func _create_fish_card(data: Dictionary) -> Control:
 		rarity_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		rarity_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		rarity_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_anchor_rect(rarity_icon, 0.35, 0.862, 0.65, 0.933)
+		_anchor_rect(rarity_icon, 0.73, 0.862, 0.99, 0.932)
 		card_wrapper.add_child(rarity_icon)
 
 	return card_wrapper
