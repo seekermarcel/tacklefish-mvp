@@ -162,16 +162,55 @@ func (h *Handler) ClaimTransferCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Atomically update device_id for the player with this transfer code.
-	var playerID int64
-	err := h.DB.QueryRow(
-		`UPDATE players SET device_id = ? WHERE transfer_code = ? RETURNING id`,
-		req.DeviceID, code,
-	).Scan(&playerID)
+	// Use a transaction to handle the case where device_id already belongs to
+	// a different (auto-registered, empty) player. Delete that player first,
+	// then update the target account's device_id.
+	tx, err := h.DB.Begin()
+	if err != nil {
+		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	// Find the player that owns this transfer code.
+	var targetPlayerID int64
+	err = tx.QueryRow(`SELECT id FROM players WHERE transfer_code = ?`, code).Scan(&targetPlayerID)
 	if err != nil {
 		http.Error(w, `{"error":"invalid transfer code"}`, http.StatusNotFound)
 		return
 	}
+
+	// Delete any fish owned by the player(s) being removed, releasing their
+	// edition numbers back into the pool.
+	_, err = tx.Exec(
+		`DELETE FROM fish_instances WHERE owner_id IN (SELECT id FROM players WHERE device_id = ? AND id != ?)`,
+		req.DeviceID, targetPlayerID,
+	)
+	if err != nil {
+		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// Remove any other player that already holds this device_id (e.g. auto-registered empty account).
+	_, err = tx.Exec(`DELETE FROM players WHERE device_id = ? AND id != ?`, req.DeviceID, targetPlayerID)
+	if err != nil {
+		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// Now safely assign the device to the target player.
+	_, err = tx.Exec(`UPDATE players SET device_id = ? WHERE id = ?`, req.DeviceID, targetPlayerID)
+	if err != nil {
+		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	if err = tx.Commit(); err != nil {
+		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	var playerID int64 = targetPlayerID
 
 	token, err := GenerateToken(h.Secret, playerID, req.DeviceID)
 	if err != nil {
