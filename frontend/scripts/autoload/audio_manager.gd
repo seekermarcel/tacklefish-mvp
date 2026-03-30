@@ -6,6 +6,7 @@ var _music_stream: AudioStream = preload("res://resources/audio/music/background
 var _sounds_stream: AudioStream = preload("res://resources/audio/music/background_sounds.mp3")
 
 # SFX streams
+var _sfx_bite: AudioStream = preload("res://resources/audio/sfx/bite_sound.mp3")
 var _sfx_cast: AudioStream = preload("res://resources/audio/sfx/cast.mp3")
 var _sfx_reel_in: AudioStream = preload("res://resources/audio/sfx/reel_in.mp3")
 var _sfx_fish_caught: AudioStream = preload("res://resources/audio/sfx/fish_caught.wav")
@@ -84,6 +85,11 @@ func play_sounds() -> void:
 
 func stop_sounds() -> void:
 	_sounds_player.stop()
+
+func play_sfx_bite() -> void:
+	_sfx_player.stream = _sfx_bite
+	_sfx_player.play()
+	get_tree().create_timer(0.3).timeout.connect(func(): if _sfx_player.stream == _sfx_bite: _sfx_player.stop())
 
 func play_sfx_cast() -> void:
 	_sfx_player.stream = _sfx_cast
