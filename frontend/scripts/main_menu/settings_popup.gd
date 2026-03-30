@@ -14,11 +14,26 @@ func _ready() -> void:
 	_build_ui()
 
 func _build_ui() -> void:
-	custom_minimum_size = Vector2(600, 0)
+	# Fill most of the screen width with padding
+	set_anchors_preset(Control.PRESET_CENTER)
+	anchor_left = 0.05
+	anchor_right = 0.95
+	anchor_top = 0.15
+	anchor_bottom = 0.85
+	grow_horizontal = Control.GROW_DIRECTION_BOTH
+	grow_vertical = Control.GROW_DIRECTION_BOTH
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 24)
+	margin.add_theme_constant_override("margin_right", 24)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(margin)
 
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 16)
-	add_child(vbox)
+	margin.add_child(vbox)
 
 	# Title
 	var title := Label.new()

@@ -92,10 +92,8 @@ func _add_settings_button() -> void:
 	_settings_button.text = "Settings"
 	_settings_button.add_theme_font_size_override("font_size", 18)
 	_settings_button.pressed.connect(_on_settings_pressed)
-	_settings_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_settings_button.position = Vector2(-120, 20)
-	_settings_button.size = Vector2(100, 40)
-	add_child(_settings_button)
+	# Bottom of the VBoxContainer, below version label
+	$CenterContainer.add_child(_settings_button)
 
 func _add_restore_link() -> void:
 	_restore_link = Button.new()
@@ -112,7 +110,6 @@ func _on_settings_pressed() -> void:
 		return
 	_settings_popup = PanelContainer.new()
 	_settings_popup.set_script(SettingsPopup)
-	_settings_popup.set_anchors_preset(Control.PRESET_CENTER)
 	_settings_popup.closed.connect(func(): _settings_popup = null)
 	add_child(_settings_popup)
 
