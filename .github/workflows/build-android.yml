@@ -1,0 +1,94 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      backend_url:
+        description: "Backend API URL (overrides default)"
+        required: false
+
+env:
+  JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+  ANDROID_HOME: /usr/lib/android-sdk
+
+jobs:
+  build-android:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.6
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install missing dependencies
+        run: apt-get update && apt-get install -y libfontconfig1
+
+      - name: Setup Android build environment
+        run: |
+          # Install build-tools 34 to match target SDK in export preset
+          yes | $ANDROID_HOME/cmdline-tools/cmdline-tools/bin/sdkmanager --licenses > /dev/null 2>&1
+          $ANDROID_HOME/cmdline-tools/cmdline-tools/bin/sdkmanager "build-tools;34.0.0" "platforms;android-34"
+
+          # GitHub Actions remaps HOME to /github/home inside containers.
+          # Symlink the Docker image's config and templates so Godot finds them.
+          mkdir -p /github/home/.local/share /github/home/.config
+          ln -sf /root/.local/share/godot /github/home/.local/share/godot
+          ln -sf /root/.config/godot /github/home/.config/godot
+
+          # Write editor settings with correct paths (format=3 required for Godot 4.x)
+          printf '%s\n' \
+            '[gd_resource type="EditorSettings" format=3]' \
+            '' \
+            '[resource]' \
+            'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"' \
+            'export/android/android_sdk_path = "/usr/lib/android-sdk"' \
+            'export/android/debug_keystore = "/github/home/debug.keystore"' \
+            'export/android/debug_keystore_user = "androiddebugkey"' \
+            'export/android/debug_keystore_pass = "android"' \
+            > /root/.config/godot/editor_settings-4.6.tres
+
+      - name: Generate debug keystore
+        run: |
+          keytool -genkeypair \
+            -alias androiddebugkey \
+            -keypass android \
+            -keystore /github/home/debug.keystore \
+            -storepass android \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000
+
+      - name: Inject backend URL
+        run: |
+          BACKEND_URL="${{ inputs.backend_url || secrets.BACKEND_URL }}"
+          if [ -n "$BACKEND_URL" ]; then
+            sed -i "s|const BASE_URL := \".*\"|const BASE_URL := \"${BACKEND_URL}\"|" frontend/scripts/autoload/network.gd
+            echo "Backend URL set to: $BACKEND_URL"
+          else
+            echo "No backend URL provided, keeping default from source"
+          fi
+
+      - name: Setup export preset
+        run: cp frontend/export_presets.cfg.ci frontend/export_presets.cfg
+
+      - name: Import Godot project
+        run: |
+          # First import may fail as Godot generates the .godot cache
+          godot --headless --import --path frontend || true
+          # Second import should succeed
+          godot --headless --import --path frontend || true
+
+      - name: Build APK
+        run: |
+          mkdir -p frontend/export
+          godot --headless --export-debug "Android" export/tacklefish.apk --path frontend
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tacklefish-debug-apk
+          path: frontend/export/tacklefish.apk
+          retention-days: 14
