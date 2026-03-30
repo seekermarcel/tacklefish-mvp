@@ -67,6 +67,8 @@ func _handle_tap() -> void:
 			_start_casting()
 		Phase.CASTING:
 			_lock_cast()
+		Phase.WAITING:
+			_reel_in_early()
 		Phase.BITE:
 			_on_bite_tap()
 
@@ -156,10 +158,20 @@ func _start_waiting() -> void:
 	if current_phase == Phase.WAITING:
 		_start_bite()
 
+func _reel_in_early() -> void:
+	current_phase = Phase.IDLE  # stops _start_waiting from calling _start_bite
+	bobber.visible = false
+	bobber.stop()
+	fishing_rod.play("idle")
+	status_label.visible = false
+	wait_panel.visible = false
+	_show_idle()
+
 func _start_bite() -> void:
 	current_phase = Phase.BITE
 	wait_panel.visible = false
 	status_label.visible = false
+	AudioManager.play_sfx_bite()
 
 	bite_label.visible = true
 	bite_label.scale = Vector2.ONE
