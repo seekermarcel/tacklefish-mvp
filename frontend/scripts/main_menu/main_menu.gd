@@ -9,6 +9,7 @@ const BG_FOCUS := Vector2(0.5, 0.70)
 @onready var start_button: TextureButton = %StartButton
 @onready var exit_button: TextureButton = %ExitButton
 @onready var status_label: Label = %StatusLabel
+@onready var version_label: Label = %VersionLabel
 
 func _get_frame_size() -> Vector2:
 	var frames := background.sprite_frames
@@ -23,6 +24,7 @@ func _ready() -> void:
 	get_tree().root.size_changed.connect(_fit_background)
 	AudioManager.play_music()
 	AudioManager.play_sounds()
+	version_label.text = GameState.VERSION
 	_auto_register()
 
 func _fit_background() -> void:

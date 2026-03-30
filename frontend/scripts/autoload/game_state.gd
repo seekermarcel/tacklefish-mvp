@@ -1,6 +1,8 @@
 extends Node
 ## Global game state singleton. Holds player info and current session data.
 
+const VERSION := "dev"
+
 var player_id: int = 0
 var inventory: Array = []
 var pool: Array = []
