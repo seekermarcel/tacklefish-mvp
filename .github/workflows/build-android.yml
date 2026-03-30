@@ -6,17 +6,58 @@ on:
       backend_url:
         description: "Backend API URL (overrides default)"
         required: false
+  release:
+    types: [published]
 
 env:
   JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
   ANDROID_HOME: /usr/lib/android-sdk
 
 jobs:
+  check-changes:
+    name: Check frontend changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    outputs:
+      frontend_changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if frontend changed since last release
+        id: check
+        run: |
+          # Find the previous tag before the current one
+          CURRENT_TAG="${{ github.event.release.tag_name }}"
+          PREV_TAG=$(git tag --sort=-creatordate | grep -v "^${CURRENT_TAG}$" | head -n 1)
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tag found, building"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            CHANGES=$(git diff --name-only "$PREV_TAG" "$CURRENT_TAG" -- frontend/ export_presets.cfg.ci)
+            if [ -n "$CHANGES" ]; then
+              echo "Frontend changed since $PREV_TAG:"
+              echo "$CHANGES"
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "No frontend changes since $PREV_TAG, skipping build"
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
   build-android:
     name: Build Debug APK
     runs-on: ubuntu-latest
+    needs: check-changes
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.check-changes.outputs.frontend_changed == 'true'
     container:
       image: barichello/godot-ci:4.6
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -86,9 +127,19 @@ jobs:
           mkdir -p frontend/export
           godot --headless --export-debug "Android" export/tacklefish.apk --path frontend
 
-      - name: Upload APK
+      - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
           name: tacklefish-debug-apk
           path: frontend/export/tacklefish.apk
           retention-days: 14
+
+      - name: Upload APK to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apt-get install -y gh
+          gh release upload "${{ github.event.release.tag_name }}" \
+            frontend/export/tacklefish.apk#"Tacklefish Debug APK" \
+            --repo "${{ github.repository }}"
