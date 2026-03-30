@@ -15,7 +15,8 @@ Go API server for the Tacklefish mobile fishing game. Handles authentication, fi
 
 ```bash
 # From the repo root
-docker compose up
+docker compose build
+docker compose up -d
 ```
 
 Server starts on `http://localhost:8080`.

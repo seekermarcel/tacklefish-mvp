@@ -49,6 +49,23 @@ func get_inventory(limit: int = 20, offset: int = 0) -> Dictionary:
 func get_fish_detail(fish_id: int) -> Dictionary:
 	return await _do_request("/player/inventory/%d" % fish_id, HTTPClient.METHOD_GET)
 
+## Generate a new backup code (replaces any existing code).
+func generate_transfer_code() -> Dictionary:
+	return await _do_request("/auth/transfer-code", HTTPClient.METHOD_POST)
+
+## Get the existing backup code (or null if none exists).
+func get_transfer_code() -> Dictionary:
+	return await _do_request("/auth/transfer-code", HTTPClient.METHOD_GET)
+
+## Claim an account using a backup code from a previous install.
+func claim_transfer_code(device_id: String, code: String) -> Dictionary:
+	var body := JSON.stringify({"device_id": device_id, "transfer_code": code})
+	var result := await _do_request("/auth/transfer", HTTPClient.METHOD_POST, body, false)
+	if result.status == 200:
+		Auth.token = result.data.get("token", "")
+		GameState.player_id = result.data.get("player_id", 0)
+	return result
+
 ## Internal: perform an HTTP request with optional auth and auto-retry on 401.
 func _do_request(path: String, method: int, body: String = "", use_auth: bool = true) -> Dictionary:
 	var headers := PackedStringArray(["Content-Type: application/json"])

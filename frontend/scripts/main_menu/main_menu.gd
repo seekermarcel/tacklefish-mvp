@@ -5,11 +5,17 @@ extends Control
 # The fisher is roughly centered horizontally, ~70% down.
 const BG_FOCUS := Vector2(0.5, 0.70)
 
+const SettingsPopup = preload("res://scripts/main_menu/settings_popup.gd")
+
 @onready var background: AnimatedSprite2D = $Background
 @onready var start_button: TextureButton = %StartButton
 @onready var exit_button: TextureButton = %ExitButton
 @onready var status_label: Label = %StatusLabel
 @onready var version_label: Label = %VersionLabel
+
+var _settings_button: Button
+var _restore_link: Button
+var _settings_popup: PanelContainer
 
 func _get_frame_size() -> Vector2:
 	var frames := background.sprite_frames
@@ -25,6 +31,9 @@ func _ready() -> void:
 	AudioManager.play_music()
 	AudioManager.play_sounds()
 	version_label.text = GameState.VERSION
+	_add_settings_button()
+	if Auth.is_fresh_install:
+		_add_restore_link()
 	_auto_register()
 
 func _fit_background() -> void:
@@ -77,6 +86,32 @@ func _on_start_pressed() -> void:
 	# Brief black, then scene change + iris open (1.0s).
 	await get_tree().create_timer(0.1).timeout
 	await SceneTransition.iris_open_with_scene("res://scenes/fishing/fishing.tscn", 1.0)
+
+func _add_settings_button() -> void:
+	_settings_button = Button.new()
+	_settings_button.text = "Settings"
+	_settings_button.add_theme_font_size_override("font_size", 18)
+	_settings_button.pressed.connect(_on_settings_pressed)
+	# Bottom of the VBoxContainer, below version label
+	$CenterContainer.add_child(_settings_button)
+
+func _add_restore_link() -> void:
+	_restore_link = Button.new()
+	_restore_link.text = "I have a backup code"
+	_restore_link.flat = true
+	_restore_link.add_theme_font_size_override("font_size", 18)
+	_restore_link.add_theme_color_override("font_color", Color(0.3, 0.6, 1.0))
+	_restore_link.pressed.connect(_on_settings_pressed)
+	# Add below the version label in the VBoxContainer
+	$CenterContainer.add_child(_restore_link)
+
+func _on_settings_pressed() -> void:
+	if _settings_popup != null:
+		return
+	_settings_popup = PanelContainer.new()
+	_settings_popup.set_script(SettingsPopup)
+	_settings_popup.closed.connect(func(): _settings_popup = null)
+	add_child(_settings_popup)
 
 func _on_exit_pressed() -> void:
 	get_tree().quit()

@@ -58,6 +58,10 @@ func _fit_background() -> void:
 	background.position = offset
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		if current_phase == Phase.IDLE:
+			await SceneTransition.iris_to("res://scenes/main_menu/main_menu.tscn")
+		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_handle_tap()
 
