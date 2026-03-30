@@ -17,7 +17,7 @@ The MVP includes **only** what is needed to validate the core game loop and the 
 |---------|-------------------|
 | Fishing minigame (cast, wait, bite reaction, fish fight, catch) | The core mechanic -- must feel good |
 | 1 zone (Village Pond) | Enough to test the loop |
-| 10 fish species (3 common, 3 uncommon, 2 rare, 1 epic, 1 legendary) | Tests the rarity system without needing hundreds of assets |
+| 12 fish species (3 common, 3 uncommon, 3 rare, 1 epic, 2 legendary) | Tests the rarity system without needing hundreds of assets |
 | Edition system with numbered fish | The unique selling point -- must be validated |
 | Fish inventory (simple list) | Player needs to see what they caught |
 | Fish reveal screen | The dopamine moment -- species, number, traits |
@@ -40,7 +40,7 @@ The MVP includes **only** what is needed to validate the core game loop and the 
 | Cosmetics / skins | Monetization layer, not core |
 | Weather / time-of-day modifiers | Complexity for later |
 | Valkey cache layer | SQLite alone is fine for MVP scale |
-| Audio / music | Placeholder SFX only |
+| ~~Audio / music~~ | ~~Placeholder SFX only~~ (implemented: background music, ambient sounds, SFX for cast/reel/catch/collection) |
 
 ---
 
@@ -87,28 +87,31 @@ frontend/
 ### Backend (Go)
 
 ```
-tacklefish-server/
+backend/
   cmd/
     server/
-      main.go                -- Entry point, starts HTTP server
+      main.go                -- Entry point, route wiring, middleware chain
   internal/
     auth/
       handler.go             -- POST /auth/register, /auth/refresh
       jwt.go                 -- JWT creation and validation
       middleware.go           -- Auth middleware for protected routes
+      ratelimit.go           -- Per-player rate limiting
     fish/
-      handler.go             -- POST /fish/catch (validate + assign)
-      pool.go                -- Edition pool management
-      traits.go              -- Trait rolling logic
-      species.go             -- Species definitions and rarity
+      handler.go             -- POST /fish/catch, GET /fish/pool
+      pool.go                -- Edition pool queries, number assignment
+      traits.go              -- Size & color variant rolling
+      species.go             -- Rarity weights, timing-to-rarity math
     player/
-      handler.go             -- GET /player/inventory
-      model.go               -- Player data model
+      handler.go             -- GET /player/inventory, /player/inventory/{id}
     db/
-      sqlite.go              -- DB init, migrations, connection
-      queries.go             -- SQL queries
+      sqlite.go              -- DB connection, migration runner
   migrations/
-    001_init.sql             -- Players, fish_species, fish_instances, edition_pools
+    001_init.sql             -- Schema (players, fish_species, fish_instances)
+    002_seed_species.sql     -- 12 MVP fish species
+    embed.go                 -- Embeds .sql files into the binary
+  tests/                     -- All tests (unit, handler, stress)
+  Dockerfile
   go.mod
   go.sum
 ```
@@ -214,7 +217,7 @@ Creates fish sprites (10 species + color variants), UI mockups, pond background,
 - [x] **Dev B:** Initialize Go module (`go mod init`), create folder structure from Section 2
 - [x] **Dev B:** Write `001_init.sql` migration and DB init code with WAL mode
 - [x] **Dev B:** Seed fish_species table with 10 MVP species
-- [ ] **Designer:** Decide art style (propose 2-3 fish concepts for team vote)
+- [x] **Designer:** Decide art style (propose 2-3 fish concepts for team vote)
 
 ### Phase 1 -- Auth & Skeleton (Day 3-5)
 
@@ -233,7 +236,7 @@ Client:
 Design:
 - [x] **Designer:** Finalize art style based on team vote (pixel art, Stardew Valley aesthetic)
 - [x] **Designer:** Create pond background (pixel art forest pond scene)
-- [ ] **Designer:** Start fish sprites (prioritize 3 common fish first)
+- [x] **Designer:** Start fish sprites (prioritize 3 common fish first)
 
 ### Phase 2 -- Fishing Mechanic (Day 6-12)
 
@@ -245,7 +248,7 @@ Client (core mechanic -- this is the most important phase):
 - [x] **Dev A:** Build fish-fighting minigame overlay (joystick + circle arena, keep fish in circle 10s)
 - [x] **Dev A:** Send timing score to backend on catch attempt
 - [x] **Dev A:** Handle miss (pool depleted) -- return to idle state
-- [ ] **Dev A:** Use Godot MCP + Claude Code to iterate on game feel (bar speed, zone size, timing windows)
+- [x] **Dev A:** Use Godot MCP + Claude Code to iterate on game feel (bar speed, zone size, timing windows)
 
 Backend:
 - [x] **Dev B:** Implement `POST /fish/catch` -- full catch flow:
@@ -260,16 +263,16 @@ Backend:
 - [x] **Dev B:** Write tests for catch logic (rarity distribution, pool depletion, edge cases)
 
 Design:
-- [ ] **Designer:** Deliver all 10 fish sprites (base color)
-- [ ] **Designer:** Create color variants for each fish (albino, melanistic, rainbow, neon = 4 variants per fish)
+- [ ] **Designer:** Deliver all 12 fish sprites (base color) -- 9/12 done (missing: Moonbass, Ice Trout, Golden Primeval Perch)
+- [x] **Designer:** Create color variants for each fish (albino, melanistic, rainbow, neon = 4 variants per fish)
 - [x] **Designer:** Design cast bar and progress bar sprites (wooden pixel art)
-- [ ] **Designer:** Design bobber and minigame indicator sprites
+- [x] **Designer:** Design bobber and minigame indicator sprites
 
 ### Phase 3 -- Fish Reveal & Inventory (Day 13-18)
 
 Client:
 - [x] **Dev A:** Build fish reveal screen (`fish_reveal.tscn`):
-  - [ ] Fish sprite (correct species + color variant) -- needs art assets
+  - [x] Fish sprite (correct species + color variant) with color modulation
   - [x] Edition number display ("#47 / 1000")
   - [x] Rarity badge (color-coded: common/uncommon/rare/epic/legendary)
   - [x] Size and color trait labels
@@ -279,9 +282,9 @@ Client:
   - [x] Search bar (filter by species name)
   - [x] Rarity filter buttons (All, Common, Uncommon, Rare, Epic, Legendary)
   - [x] Placeholder fish sprites (colored rectangles per species/variant)
-  - [ ] Tap to open fish detail view -- not yet wired
-- [ ] **Dev A:** Build fish detail view (`fish_detail.tscn`):
-  - [ ] Full fish sprite, all traits, caught timestamp
+  - [x] Tap to open fish detail view
+- [x] **Dev A:** Build fish detail view (`fish_detail.tscn`):
+  - [x] Full fish sprite, all traits, caught timestamp
 - [x] **Dev A:** Implement navigation: Main Menu -> Fishing -> Reveal -> (Inventory | Fishing)
 
 Backend:
@@ -290,35 +293,35 @@ Backend:
 - [x] **Dev B:** Add pagination to inventory endpoint (offset + limit)
 
 Design:
-- [ ] **Designer:** Design fish reveal screen layout (the "unboxing" moment)
-- [ ] **Designer:** Design rarity badge icons (5 tiers)
-- [ ] **Designer:** Design inventory list item layout
-- [ ] **Designer:** Design fish detail card layout
+- [x] **Designer:** Design fish reveal screen layout (the "unboxing" moment)
+- [x] **Designer:** Design rarity badge icons (5 tiers)
+- [x] **Designer:** Design inventory list item layout
+- [x] **Designer:** Design fish detail card layout
 
 ### Phase 4 -- Polish & Playtest (Day 19-24)
 
-- [ ] **Dev A:** Add placeholder SFX (cast splash, reel, catch chime, rare catch fanfare)
+- [x] **Dev A:** Add SFX and music (cast, reel, catch chime, background soundtrack, ambient sounds)
 - [x] **Dev A:** Add screen transitions (Animal Crossing iris wipe on all scene changes)
 - [x] **Dev A:** Add bobber animation (idle float, appears after rod throw animation)
 - [ ] **Dev A:** Add fish sprite animation on reveal (bounce/shimmer)
-- [ ] **Dev A:** Tune minigame difficulty per rarity tier via Godot MCP + Claude Code
+- [x] **Dev A:** Tune minigame difficulty per rarity tier via Godot MCP + Claude Code
 - [x] **Dev B:** Add rate limiting on `/fish/catch` (max 1 catch per 3 seconds)
 - [x] **Dev B:** Add basic error responses (pool empty, invalid timing, server errors)
 - [x] **Dev B:** Stress test: simulate 100 players depleting a fish pool
-- [ ] **Designer:** Final polish pass on all sprites and UI elements
-- [ ] **Designer:** Create app icon and splash screen
-- [ ] **ALL:** Playtest session -- each team member plays 30+ minutes
-- [ ] **ALL:** Collect feedback: is the cast-wait-catch loop fun? Is the reveal exciting?
-- [ ] **ALL:** Prioritize and fix top 5 issues from playtest
+- [x] **Designer:** Final polish pass on all sprites and UI elements
+- [x] **Designer:** Create app icon and splash screen
+- [x] **ALL:** Playtest session -- each team member plays 30+ minutes
+- [x] **ALL:** Collect feedback: is the cast-wait-catch loop fun? Is the reveal exciting?
+- [x] **ALL:** Prioritize and fix top 5 issues from playtest
 
 ### Phase 5 -- Build & Deploy (Day 25-28)
 
-- [ ] **Dev A:** Export Android APK from Godot (or desktop build for easier testing)
+- [x] **Dev A:** Export Android APK via GitHub Actions CI/CD pipeline
 - [x] **Dev B:** Dockerize Go backend (single container with SQLite volume mount)
-- [ ] **Dev B:** Deploy backend to a cheap VPS (Hetzner, Fly.io, or similar)
-- [ ] **Dev A:** Point client `network.gd` at deployed backend URL
-- [ ] **ALL:** End-to-end test on real device / real server
-- [ ] **ALL:** Share APK with 5-10 friends for external feedback
+- [x] **Dev B:** Deploy backend to a cheap VPS (Hetzner, Fly.io, or similar)
+- [x] **Dev A:** Point client `network.gd` at deployed backend URL (injected via CI secret BACKEND_URL)
+- [x] **ALL:** End-to-end test on real device / real server
+- [x] **ALL:** Share APK with 5-10 friends for external feedback
 
 ---
 
@@ -372,17 +375,19 @@ If these are validated, the next phase adds the marketplace and a second zone.
 
 ---
 
-## 7. MVP Fish Species (10)
+## 7. MVP Fish Species (12)
 
-| # | Name | Rarity | Edition Size | Notes |
-|---|------|--------|-------------|-------|
-| 1 | Perch | Common | 1,000 | Starter fish, easy catch |
-| 2 | Carp | Common | 800 | Slow bite, wide timing zone |
-| 3 | Chub | Common | 600 | Quick bite, forgiving minigame |
-| 4 | Brook Trout | Uncommon | 400 | Moderate difficulty |
-| 5 | Moonbass | Uncommon | 300 | Only bites at dusk (future: MVP ignores time) |
-| 6 | Catfish | Uncommon | 250 | Long wait time, has sprite asset |
-| 7 | Ice Trout | Rare | 150 | Harder minigame difficulty |
-| 8 | Night Eel | Rare | 100 | Very challenging |
-| 9 | Obsidian Pufferfish | Epic | 30 | Tricky to land |
-| 10 | Golden Primeval Perch | Legendary | 10 | Hardest to catch |
+| # | Name | Rarity | Edition Size | Sprite | Notes |
+|---|------|--------|-------------|--------|-------|
+| 1 | Perch | Common | 1,000 | Done | Starter fish, easy catch |
+| 2 | Carp | Common | 800 | Done | Slow bite, wide timing zone |
+| 3 | Chub | Common | 600 | Done | Quick bite, forgiving minigame |
+| 4 | Brook Trout | Uncommon | 400 | Done | Moderate difficulty |
+| 5 | Moonbass | Uncommon | 300 | **Missing** | Only bites at dusk (future: MVP ignores time) |
+| 6 | Catfish | Uncommon | 250 | Done | Long wait time |
+| 7 | Ice Trout | Rare | 150 | **Missing** | Harder minigame difficulty |
+| 8 | Night Eel | Rare | 100 | Done | Very challenging |
+| 9 | Buntbarsch | Rare | 150 | Done | Cichlid, colorful tropical fish |
+| 10 | Obsidian Pufferfish | Epic | 30 | Done | Tricky to land |
+| 11 | Golden Primeval Perch | Legendary | 10 | **Missing** | Hardest to catch |
+| 12 | Unifish | Legendary | 10 | Done | Mythical unicorn fish |

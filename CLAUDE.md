@@ -36,12 +36,14 @@ frontend/              -- Godot 4.6 game client
     fishing/           -- Tap-anywhere fishing: cast, wait, bite reaction, fish-fighting minigame
     fish_reveal/       -- Post-catch reveal screen
     inventory/         -- Collection book with search, filters, fish cards
+    fish_detail/       -- Detailed view of a single fish
   scripts/
-    autoload/          -- Singletons: GameState, Auth, Network, SceneTransition
+    autoload/          -- Singletons: GameState, Auth, Network, SceneTransition, AudioManager
     main_menu/         -- Auto-register, zoom + iris wipe transition
     fishing/           -- Cast -> wait -> bite reaction -> fish-fighting minigame -> catch flow
     fish_reveal/       -- Reveal screen logic
     inventory/         -- Collection book with search/filter/pagination
+    fish_detail/       -- Fish detail view logic
   resources/
     fonts/             -- Pixel art font
     sprites/
@@ -49,10 +51,14 @@ frontend/              -- Godot 4.6 game client
       fish/            -- Per-species fish sprites (loaded by name convention)
       minigame/        -- Fish-fighting minigame background and fish sprites
       ui/              -- Wooden buttons, progress bar, inventory/market icons
+    audio/
+      music/           -- Background soundtrack and ambient sounds
+      sfx/             -- Cast, reel, catch, collection open/close SFX
 testing-frontend/      -- Browser-based test client (HTML/JS/nginx)
 docs/                  -- Design documents
 references/            -- Source material
-docker-compose.yml     -- Run backend + testing frontend via Docker
+docker-compose.yml     -- Run backend via Docker
+.github/workflows/     -- CI/CD (Android APK build)
 ```
 
 ## Running the Project
@@ -88,12 +94,13 @@ Testing frontend runs on `http://localhost:3000`.
 ### Godot (Client)
 
 - **Godot 4.6** with GDScript, mobile renderer
-- Portrait orientation (720x1280 viewport, canvas_items stretch)
-- 4 autoload singletons registered in `project.godot`:
+- Portrait orientation (720x1600 viewport, canvas_items stretch)
+- 5 autoload singletons registered in `project.godot`:
   - `GameState` -- player ID, inventory, pool data
   - `Auth` -- device UUID generation/persistence, JWT token storage
   - `Network` -- HTTP client wrapping all API calls, auto-refresh on 401, rate limit handling
   - `SceneTransition` -- Animal Crossing-style iris wipe shader, used for all scene changes
+  - `AudioManager` -- Music, ambient sounds, and SFX playback with dedicated audio buses
 - Scenes organized by feature in `scenes/`, scripts in matching `scripts/` subdirectories
 - Scenes use `unique_name_in_owner` (`%NodeName`) for node references
 - All game logic is server-side -- client only sends `timing_score` and displays results
@@ -133,10 +140,11 @@ These have been decided and should not be changed without discussion:
 The current phase is MVP (see `docs/mvp.md`). Only these features matter right now:
 
 1. Fishing minigame (cast, wait, bite reaction, fish-fighting minigame, catch)
-2. 1 zone (Village Pond), 10 fish species
+2. 1 zone (Village Pond), 12 fish species
 3. Edition system with numbered fish
 4. Fish reveal screen
-5. Simple inventory
+5. Simple inventory with fish detail view
 6. Device ID auth + Go backend
+7. Android APK build pipeline (GitHub Actions)
 
 Everything else (marketplace, seasons, cosmetics, multiple zones) is post-MVP.

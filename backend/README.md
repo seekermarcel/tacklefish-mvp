@@ -219,7 +219,7 @@ backend/
       sqlite.go            -- DB connection, migration runner
   migrations/
     001_init.sql           -- Schema (players, fish_species, fish_instances)
-    002_seed_species.sql   -- 10 MVP fish species
+    002_seed_species.sql   -- 12 MVP fish species
     embed.go               -- Embeds .sql files into the binary
   tests/
     helpers_test.go        -- Shared test DB setup and helpers
@@ -316,7 +316,7 @@ go tool cover -html=coverage.out -o coverage.html                          # HTM
 | `player` | Inventory | 69% |
 | `player` | FishDetail | 79% |
 
-### Test Files (33 tests)
+### Test Files (39 tests)
 
 | File | Tests |
 |------|-------|

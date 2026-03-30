@@ -18,7 +18,7 @@ Tacklefish is a casual mobile fishing game. The player casts a line, plays a tim
 3. Simple inventory (scrollable list + detail view)
 4. Auto-auth on first launch (no login screen)
 5. 1 zone only (Village Pond)
-6. 10 fish species
+6. 12 fish species
 
 **Out of scope:** Marketplace, seasons, cosmetics, multiple zones, aquarium, codex, daily quests.
 
@@ -45,6 +45,8 @@ frontend/
       fish_reveal.tscn          -- Post-catch reveal screen
     inventory/
       inventory.tscn            -- Collection book with search/filter/pagination
+    fish_detail/
+      fish_detail.tscn          -- Detailed view of a single fish
     main_menu/
       main_menu.tscn            -- Animated title screen with auto-auth
   scripts/
@@ -53,6 +55,7 @@ frontend/
       network.gd                -- HTTP client singleton (API calls)
       auth.gd                   -- Device ID + JWT management
       scene_transition.gd       -- Iris wipe shader transitions
+      audio_manager.gd          -- Music, ambient sounds, and SFX
     fishing/
       fishing.gd                -- Cast -> wait -> bite -> minigame -> catch flow
       minigame_overlay.gd       -- Fish-fighting minigame (joystick + circle arena)
@@ -60,6 +63,8 @@ frontend/
       fish_reveal.gd            -- Reveal screen logic
     inventory/
       inventory.gd              -- Collection book with search/filter/pagination
+    fish_detail/
+      fish_detail.gd            -- Fish detail view logic
     main_menu/
       main_menu.gd              -- Auto-register, zoom + iris wipe transition
   resources/
@@ -387,7 +392,7 @@ These are the exact string values the backend sends. Use them for mapping sprite
 | `"rainbow"` | Rainbow | Multi-color shimmer |
 | `"neon"` | Neon | Bright glow effect |
 
-### MVP Fish Species (10)
+### MVP Fish Species (12)
 
 | ID | Name | Rarity | Edition Size |
 |----|------|--------|-------------|
@@ -401,6 +406,8 @@ These are the exact string values the backend sends. Use them for mapping sprite
 | 8 | Night Eel | rare | 100 |
 | 9 | Obsidian Pufferfish | epic | 30 |
 | 10 | Golden Primeval Perch | legendary | 10 |
+| 11 | Buntbarsch | rare | 150 |
+| 12 | Unifish | legendary | 10 |
 
 ---
 
