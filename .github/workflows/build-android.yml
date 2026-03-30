@@ -33,6 +33,7 @@ jobs:
 
           # GitHub Actions remaps HOME to /github/home inside containers.
           # Symlink the Docker image's config and templates so Godot finds them.
+          mkdir -p /github/home/.local/share /github/home/.config
           ln -sf /root/.local/share/godot /github/home/.local/share/godot
           ln -sf /root/.config/godot /github/home/.config/godot
 
