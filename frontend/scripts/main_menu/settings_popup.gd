@@ -14,14 +14,34 @@ func _ready() -> void:
 	_build_ui()
 
 func _build_ui() -> void:
+	# Center the popup covering most of the screen
 	# Fill most of the screen width with padding
 	set_anchors_preset(Control.PRESET_CENTER)
 	anchor_left = 0.05
 	anchor_right = 0.95
 	anchor_top = 0.15
 	anchor_bottom = 0.85
+	offset_left = 0
+	offset_right = 0
+	offset_top = 0
+	offset_bottom = 0
+
+  # Opaque wooden-style background
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color(0.22, 0.14, 0.07, 0.95)
+	bg.border_color = Color(0.45, 0.28, 0.1)
+	bg.border_width_left = 3
+	bg.border_width_right = 3
+	bg.border_width_top = 3
+	bg.border_width_bottom = 3
+	bg.corner_radius_top_left = 8
+	bg.corner_radius_top_right = 8
+	bg.corner_radius_bottom_left = 8
+	bg.corner_radius_bottom_right = 8
+	add_theme_stylebox_override("panel", bg)
 	grow_horizontal = Control.GROW_DIRECTION_BOTH
 	grow_vertical = Control.GROW_DIRECTION_BOTH
+
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 24)
