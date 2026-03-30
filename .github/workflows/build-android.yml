@@ -48,7 +48,7 @@ jobs:
           fi
 
   build-android:
-    name: Build Debug APK
+    name: Build Release APK
     runs-on: ubuntu-latest
     needs: check-changes
     if: >-
@@ -85,22 +85,13 @@ jobs:
             '[resource]' \
             'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"' \
             'export/android/android_sdk_path = "/usr/lib/android-sdk"' \
-            'export/android/debug_keystore = "/github/home/debug.keystore"' \
-            'export/android/debug_keystore_user = "androiddebugkey"' \
-            'export/android/debug_keystore_pass = "android"' \
+            'export/android/debug_keystore = "/github/home/release.keystore"' \
+            'export/android/debug_keystore_user = "${{ secrets.KEYSTORE_ALIAS }}"' \
+            'export/android/debug_keystore_pass = "${{ secrets.KEYSTORE_ALIAS_PASSWORD }}"' \
             > /root/.config/godot/editor_settings-4.6.tres
 
-      - name: Generate debug keystore
-        run: |
-          keytool -genkeypair \
-            -alias androiddebugkey \
-            -keypass android \
-            -keystore /github/home/debug.keystore \
-            -storepass android \
-            -dname "CN=Android Debug,O=Android,C=US" \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000
+      - name: Decode release keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > /github/home/release.keystore
 
       - name: Inject backend URL
         run: |
@@ -112,8 +103,19 @@ jobs:
             echo "No backend URL provided, keeping default from source"
           fi
 
+      - name: Inject app version
+        if: github.event_name == 'release'
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          sed -i "s|const VERSION := \".*\"|const VERSION := \"${VERSION}\"|" frontend/scripts/autoload/game_state.gd
+          echo "App version set to: $VERSION"
+
       - name: Setup export preset
-        run: cp frontend/export_presets.cfg.ci frontend/export_presets.cfg
+        run: |
+          cp frontend/export_presets.cfg.ci frontend/export_presets.cfg
+          sed -i 's|keystore/release=""|keystore/release="/github/home/release.keystore"|' frontend/export_presets.cfg
+          sed -i 's|keystore/release_user=""|keystore/release_user="${{ secrets.KEYSTORE_ALIAS }}"|' frontend/export_presets.cfg
+          sed -i 's|keystore/release_password=""|keystore/release_password="${{ secrets.KEYSTORE_ALIAS_PASSWORD }}"|' frontend/export_presets.cfg
 
       - name: Import Godot project
         run: |
@@ -125,12 +127,12 @@ jobs:
       - name: Build APK
         run: |
           mkdir -p frontend/export
-          godot --headless --export-debug "Android" export/tacklefish.apk --path frontend
+          godot --headless --export-release "Android" export/tacklefish.apk --path frontend
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tacklefish-debug-apk
+          name: tacklefish-release-apk
           path: frontend/export/tacklefish.apk
           retention-days: 14
 
@@ -141,5 +143,5 @@ jobs:
         run: |
           apt-get install -y gh
           gh release upload "${{ github.event.release.tag_name }}" \
-            frontend/export/tacklefish.apk#"Tacklefish Debug APK" \
+            frontend/export/tacklefish.apk#"Tacklefish APK" \
             --repo "${{ github.repository }}"
