@@ -114,7 +114,9 @@ func seedAllMVPSpecies(t *testing.T, db *sql.DB) {
 			('Ice Trout',            'rare',       150, 1),
 			('Night Eel',            'rare',       100, 1),
 			('Obsidian Pufferfish',  'epic',        30, 1),
-			('Golden Primeval Perch', 'legendary',  10, 1)
+			('Golden Primeval Perch', 'legendary',  10, 1),
+			('Buntbarsch',           'rare',       150, 1),
+			('Unifish',              'legendary',   10, 1)
 	`)
 	if err != nil {
 		t.Fatal("seed MVP species:", err)

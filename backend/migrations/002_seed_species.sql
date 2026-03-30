@@ -10,4 +10,6 @@ INSERT OR IGNORE INTO fish_species (name, rarity, edition_size, zone) VALUES
     ('Ice Trout',            'rare',       150, 1),
     ('Night Eel',            'rare',       100, 1),
     ('Obsidian Pufferfish',  'epic',        30, 1),
-    ('Golden Primeval Perch', 'legendary',  10, 1);
+    ('Golden Primeval Perch', 'legendary',  10, 1),
+    ('Buntbarsch',           'rare',       150, 1),
+    ('Unifish',              'legendary',   10, 1);
