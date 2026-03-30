@@ -12,9 +12,10 @@ import (
 
 const schema = `
 	CREATE TABLE players (
-		id         INTEGER PRIMARY KEY AUTOINCREMENT,
-		device_id  TEXT    UNIQUE NOT NULL,
-		created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		id             INTEGER PRIMARY KEY AUTOINCREMENT,
+		device_id      TEXT    UNIQUE NOT NULL,
+		transfer_code  TEXT    UNIQUE,
+		created_at     TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 	);
 	CREATE TABLE fish_species (
 		id           INTEGER PRIMARY KEY AUTOINCREMENT,

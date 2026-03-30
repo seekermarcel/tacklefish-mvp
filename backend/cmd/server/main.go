@@ -37,6 +37,7 @@ func main() {
 	// Public routes (no auth required).
 	mux.HandleFunc("POST /auth/register", authHandler.Register)
 	mux.HandleFunc("POST /auth/refresh", authHandler.Refresh)
+	mux.HandleFunc("POST /auth/transfer", authHandler.ClaimTransferCode)
 
 	// Health check.
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +54,8 @@ func main() {
 	protected.HandleFunc("GET /fish/pool", fishHandler.Pool)
 	protected.HandleFunc("GET /player/inventory", playerHandler.Inventory)
 	protected.HandleFunc("GET /player/inventory/{id}", playerHandler.FishDetail)
+	protected.HandleFunc("POST /auth/transfer-code", authHandler.GenerateTransferCode)
+	protected.HandleFunc("GET /auth/transfer-code", authHandler.GetTransferCode)
 
 	mux.Handle("/", auth.Middleware(jwtSecret)(protected))
 
