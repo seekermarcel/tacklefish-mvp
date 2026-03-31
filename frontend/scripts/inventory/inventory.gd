@@ -404,11 +404,11 @@ func _create_fish_card(data: Dictionary) -> Control:
 	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	var base_size := 85.0
+	var base_size := 75.0
 	match size_variant:
-		"mini": base_size = 65.0
+		"mini": base_size = 42.0
 		"large": base_size = 100.0
-		"giant": base_size = 110.0
+		"giant": base_size = 120.0
 	texture_rect.custom_minimum_size = Vector2(base_size * 1.6, base_size)
 	texture_rect.modulate = _color_variant_modulate(color_variant)
 	sprite_container.add_child(texture_rect)
