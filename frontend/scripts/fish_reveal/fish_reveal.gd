@@ -53,16 +53,17 @@ func _display_fish_sprite(data: Dictionary) -> void:
 	var species: String = data.get("species", "Unknown")
 	var sprite_path := "res://resources/sprites/fish/%s.png" % species.to_lower().replace(" ", "_")
 
-	if ResourceLoader.exists(sprite_path):
-		var color_variant: String = data.get("color_variant", "normal")
-		var texture_rect := TextureRect.new()
-		texture_rect.texture = load(sprite_path)
-		texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		texture_rect.custom_minimum_size = Vector2(200, 200)
-		texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		texture_rect.modulate = _color_variant_modulate(color_variant)
-		fish_sprite_container.add_child(texture_rect)
+	var color_variant: String = data.get("color_variant", "normal")
+	if not ResourceLoader.exists(sprite_path):
+		sprite_path = "res://resources/sprites/fish/fish_placeholder.png"
+	var texture_rect := TextureRect.new()
+	texture_rect.texture = load(sprite_path)
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	texture_rect.custom_minimum_size = Vector2(200, 200)
+	texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	texture_rect.modulate = _color_variant_modulate(color_variant)
+	fish_sprite_container.add_child(texture_rect)
 
 static func _color_variant_modulate(color_variant: String) -> Color:
 	match color_variant:
