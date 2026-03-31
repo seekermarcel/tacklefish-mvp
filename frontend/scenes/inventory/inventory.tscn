@@ -48,9 +48,11 @@ layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="ScrollContainer" type="ScrollContainer" parent="ContentContainer/VBox" unique_id=1600087876]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
 
 [node name="FishGrid" type="GridContainer" parent="ContentContainer/VBox/ScrollContainer" unique_id=1080708669]
 unique_name_in_owner = true

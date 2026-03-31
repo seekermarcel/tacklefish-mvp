@@ -32,8 +32,10 @@ const FISH_PLACEHOLDER_COLORS := {
 
 const PIXEL_FONT := preload("res://resources/fonts/pixel.ttf")
 const CARD_TEXTURE := preload("res://resources/sprites/ui/fish_card.png")
+const SCROLL_BAR_TEXTURE := preload("res://resources/sprites/ui/scroll_bar.png")
 const PAGE_SIZE := 50
 const CARD_HEIGHT := 420
+const DRAG_THRESHOLD := 14.0
 
 const RARITY_ICONS := {
 	"common": preload("res://resources/sprites/ui/rarity_common.png"),
@@ -51,6 +53,16 @@ var active_rarity_filter: String = ""
 var search_query: String = ""
 var search_visible: bool = false
 
+# Touch / swipe state
+var _touch_start: Vector2 = Vector2.ZERO
+var _is_dragging: bool = false
+var _mouse_held: bool = false
+
+# Custom scrollbar nodes
+var _scroll_track: ColorRect = null
+var _scroll_thumb: TextureRect = null
+
+@onready var scroll_container: ScrollContainer = %ScrollContainer
 @onready var content_container: MarginContainer = %ContentContainer
 @onready var fish_grid: GridContainer = %FishGrid
 @onready var count_label: Label = %CountLabel
@@ -69,6 +81,13 @@ func _ready() -> void:
 	search_button.pressed.connect(_toggle_search)
 	load_more_button.pressed.connect(_load_more)
 	search_input.text_changed.connect(_on_search_changed)
+
+	# Disable native scrolling — we handle it ourselves so we can
+	# distinguish swipes (scroll) from taps (open card).
+	scroll_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+
+	_setup_scrollbar()
 
 	# Style the search panel to match book aesthetic.
 	var panel_style := StyleBoxFlat.new()
@@ -91,12 +110,99 @@ func _ready() -> void:
 	_setup_filters()
 	_play_opening()
 
+func _setup_scrollbar() -> void:
+	_scroll_track = ColorRect.new()
+	_scroll_track.color = Color(0.12, 0.08, 0.04, 0.45)
+	_scroll_track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_scroll_track.visible = false
+	add_child(_scroll_track)
+
+	_scroll_thumb = TextureRect.new()
+	_scroll_thumb.texture = SCROLL_BAR_TEXTURE
+	_scroll_thumb.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_scroll_thumb.stretch_mode = TextureRect.STRETCH_SCALE
+	_scroll_thumb.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_scroll_thumb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_scroll_thumb.visible = false
+	add_child(_scroll_thumb)
+
+func _update_scrollbar() -> void:
+	if _scroll_thumb == null:
+		return
+	var content_h := fish_grid.size.y
+	var view_h := scroll_container.size.y
+	var max_scroll := maxf(content_h - view_h, 0.0)
+	if max_scroll <= 0.0:
+		_scroll_track.visible = false
+		_scroll_thumb.visible = false
+		return
+	var sc_pos := scroll_container.global_position
+	var sc_size := scroll_container.size
+
+	# Track: thin strip in the right margin.
+	const TRACK_W := 24.0
+	var track_x := sc_pos.x + sc_size.x + 8.0
+	_scroll_track.position = Vector2(track_x, sc_pos.y)
+	_scroll_track.size = Vector2(TRACK_W, sc_size.y)
+	_scroll_track.visible = true
+
+	# Thumb: the plank texture rotated 90°.
+	# We set size = Vector2(visual_height, visual_width) because rotating 90°
+	# swaps width↔height visually.  After rotation around (0,0), the visual box
+	# shifts left by original_height, so we add that back to position.x.
+	const THUMB_VISUAL_W := TRACK_W   # appears this wide after rotation
+	const THUMB_VISUAL_H := 56.0      # appears this tall after rotation (fixed, no stretching)
+	_scroll_thumb.size = Vector2(THUMB_VISUAL_H, THUMB_VISUAL_W)
+	_scroll_thumb.rotation_degrees = 90.0
+	_scroll_thumb.pivot_offset = Vector2.ZERO
+
+	var scroll_progress := float(scroll_container.scroll_vertical) / max_scroll
+	var thumb_y := sc_pos.y + scroll_progress * (sc_size.y - THUMB_VISUAL_H)
+	# After 90° CW rotation around top-left, visual moves left by original_height (THUMB_VISUAL_W).
+	_scroll_thumb.position = Vector2(track_x + THUMB_VISUAL_W, thumb_y)
+	_scroll_thumb.visible = true
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_touch_start = event.position
+			_is_dragging = false
+	elif event is InputEventScreenDrag:
+		if not _is_dragging and event.position.distance_to(_touch_start) > DRAG_THRESHOLD:
+			_is_dragging = true
+		if _is_dragging:
+			scroll_container.scroll_vertical -= int(event.relative.y)
+			_update_scrollbar()
+	elif event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				_touch_start = event.position
+				_is_dragging = false
+				_mouse_held = true
+			else:
+				_mouse_held = false
+		elif event.pressed:
+			if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+				scroll_container.scroll_vertical -= 80
+				_update_scrollbar()
+			elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				scroll_container.scroll_vertical += 80
+				_update_scrollbar()
+	elif event is InputEventMouseMotion and _mouse_held:
+		if not _is_dragging and event.position.distance_to(_touch_start) > DRAG_THRESHOLD:
+			_is_dragging = true
+		if _is_dragging:
+			scroll_container.scroll_vertical -= int(event.relative.y)
+			_update_scrollbar()
+
 func _play_opening() -> void:
 	AudioManager.play_sfx_collection_open()
 	content_container.visible = false
 	back_button.visible = false
 	search_button.visible = false
 	count_label.visible = false
+	_scroll_track.visible = false
+	_scroll_thumb.visible = false
 
 	# Scale animation to fill viewport.
 	var viewport_size := get_viewport_rect().size
@@ -126,6 +232,8 @@ func _play_closing(next_scene: String) -> void:
 	search_button.visible = false
 	count_label.visible = false
 	search_panel.visible = false
+	_scroll_track.visible = false
+	_scroll_thumb.visible = false
 
 	# Scale animation to fill viewport.
 	var viewport_size := get_viewport_rect().size
@@ -242,6 +350,8 @@ func _rebuild_grid() -> void:
 	for fish_data in filtered_fish:
 		fish_grid.add_child(_create_fish_card(fish_data))
 
+	call_deferred("_update_scrollbar")
+
 func _create_fish_card(data: Dictionary) -> Control:
 	var rarity: String = data.get("rarity", "common")
 	var species: String = data.get("species", "Unknown")
@@ -257,8 +367,9 @@ func _create_fish_card(data: Dictionary) -> Control:
 	card_wrapper.clip_children = Control.CLIP_CHILDREN_AND_DRAW
 	card_wrapper.mouse_filter = Control.MOUSE_FILTER_STOP
 	card_wrapper.gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			_on_card_pressed(data)
+		if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			if not _is_dragging:
+				_on_card_pressed(data)
 	)
 
 	# Card texture background — overflows the wrapper just like the detail scene.
@@ -305,11 +416,11 @@ func _create_fish_card(data: Dictionary) -> Control:
 		texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		var base_size := 85.0
+		var base_size := 75.0
 		match size_variant:
-			"mini": base_size = 65.0
+			"mini": base_size = 42.0
 			"large": base_size = 100.0
-			"giant": base_size = 110.0
+			"giant": base_size = 120.0
 		texture_rect.custom_minimum_size = Vector2(base_size * 1.6, base_size)
 		texture_rect.modulate = _color_variant_modulate(color_variant)
 		sprite_container.add_child(texture_rect)
@@ -323,11 +434,11 @@ func _create_fish_card(data: Dictionary) -> Control:
 			"neon":
 				fish_color = fish_color.lightened(0.3)
 				fish_color.s = 1.0
-		var base_size := 55.0
+		var base_size := 50.0
 		match size_variant:
-			"mini": base_size = 42.0
+			"mini": base_size = 28.0
 			"large": base_size = 65.0
-			"giant": base_size = 72.0
+			"giant": base_size = 80.0
 		fish_sprite.color = fish_color
 		fish_sprite.custom_minimum_size = Vector2(base_size * 1.6, base_size)
 		sprite_container.add_child(fish_sprite)
@@ -369,7 +480,7 @@ func _create_fish_card(data: Dictionary) -> Control:
 	_anchor_rect(size_label, 0.10, 0.681, 0.90, 0.726)
 	card_wrapper.add_child(size_label)
 
-	# 5. Edition number (centered on dark bar 4: 0.749-0.837).
+	# 5. Edition number (centered on dark bar 5: 0.862-0.933).
 	var edition_label := Label.new()
 	edition_label.text = "#%d / %d" % [data.get("edition_number", 0), data.get("edition_size", 0)]
 	edition_label.add_theme_color_override("font_color", Color(0.85, 0.78, 0.65))
@@ -378,10 +489,10 @@ func _create_fish_card(data: Dictionary) -> Control:
 	edition_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	edition_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	edition_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_anchor_rect(edition_label, 0.10, 0.749, 0.90, 0.837)
+	_anchor_rect(edition_label, 0.10, 0.862, 0.90, 0.933)
 	card_wrapper.add_child(edition_label)
 
-	# 6. Rarity icon (centered on dark bar 5: 0.862-0.933).
+	# 6. Rarity icon (centered on dark bar 4: 0.749-0.837).
 	var rarity_tex: Texture2D = RARITY_ICONS.get(rarity)
 	if rarity_tex:
 		var rarity_icon := TextureRect.new()
@@ -390,7 +501,7 @@ func _create_fish_card(data: Dictionary) -> Control:
 		rarity_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		rarity_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		rarity_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_anchor_rect(rarity_icon, 0.35, 0.862, 0.65, 0.933)
+		_anchor_rect(rarity_icon, 0.73, 0.862, 0.99, 0.932)
 		card_wrapper.add_child(rarity_icon)
 
 	return card_wrapper
