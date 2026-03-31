@@ -137,8 +137,8 @@ func TestPoolHandler(t *testing.T) {
 	if err := json.NewDecoder(w.Body).Decode(&pool); err != nil {
 		t.Fatal("decode:", err)
 	}
-	if len(pool) != 12 {
-		t.Errorf("expected 12 species, got %d", len(pool))
+	if len(pool) != 13 {
+		t.Errorf("expected 13 species, got %d", len(pool))
 	}
 
 	// Check first species has full pool.

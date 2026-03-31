@@ -1,4 +1,4 @@
--- MVP fish species: 10 species for Village Pond (zone 1)
+-- MVP fish species for Village Pond (zone 1)
 
 INSERT OR IGNORE INTO fish_species (name, rarity, edition_size, zone) VALUES
     ('Perch',                'common',    1000, 1),
@@ -11,5 +11,6 @@ INSERT OR IGNORE INTO fish_species (name, rarity, edition_size, zone) VALUES
     ('Night Eel',            'rare',       100, 1),
     ('Obsidian Pufferfish',  'epic',        30, 1),
     ('Golden Primeval Perch', 'legendary',  10, 1),
-    ('Buntbarsch',           'rare',       150, 1),
-    ('Unifish',              'legendary',   10, 1);
+    ('Cichlid',              'rare',       150, 1),
+    ('Unifish',              'legendary',   10, 1),
+    ('Old Shoe',             'legendary',    2, 1);

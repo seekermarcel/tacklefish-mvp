@@ -101,7 +101,7 @@ func catchFish(t *testing.T, db *sql.DB, speciesID int64, editionNum int) {
 	}
 }
 
-// seedAllMVPSpecies inserts the 10 MVP fish species.
+// seedAllMVPSpecies inserts the MVP fish species.
 func seedAllMVPSpecies(t *testing.T, db *sql.DB) {
 	t.Helper()
 	_, err := db.Exec(`
@@ -116,8 +116,9 @@ func seedAllMVPSpecies(t *testing.T, db *sql.DB) {
 			('Night Eel',            'rare',       100, 1),
 			('Obsidian Pufferfish',  'epic',        30, 1),
 			('Golden Primeval Perch', 'legendary',  10, 1),
-			('Buntbarsch',           'rare',       150, 1),
-			('Unifish',              'legendary',   10, 1)
+			('Cichlid',              'rare',       150, 1),
+			('Unifish',              'legendary',   10, 1),
+			('Old Shoe',             'legendary',    2, 1)
 	`)
 	if err != nil {
 		t.Fatal("seed MVP species:", err)
