@@ -41,6 +41,7 @@ var status_tween: Tween = null
 
 func _ready() -> void:
 	inventory_button.pressed.connect(_on_inventory_pressed)
+	market_button.pressed.connect(_on_market_pressed)
 	profile_button.gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			_on_profile_pressed()
@@ -273,6 +274,9 @@ func _on_catch() -> void:
 
 func _on_inventory_pressed() -> void:
 	await SceneTransition.iris_to("res://scenes/inventory/inventory.tscn")
+
+func _on_market_pressed() -> void:
+	await SceneTransition.iris_to("res://scenes/marketplace/marketplace.tscn")
 
 func _on_profile_pressed() -> void:
 	await SceneTransition.iris_to("res://scenes/profile/profile.tscn")

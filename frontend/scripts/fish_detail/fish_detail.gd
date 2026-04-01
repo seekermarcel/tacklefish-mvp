@@ -12,6 +12,7 @@ extends Control
 @onready var back_to_pond_button: Label = %BackToPondButton
 @onready var release_fish_button: Label = %ReleaseFishButton
 @onready var sell_fish_button: Label = %SellFishButton
+@onready var list_on_market_button: Label = %ListOnMarketButton
 
 var _fish_data: Dictionary = {}
 var _confirm_panel: PanelContainer
@@ -32,6 +33,10 @@ func _ready() -> void:
 	sell_fish_button.gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			_on_sell_pressed()
+	)
+	list_on_market_button.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_on_list_pressed()
 	)
 
 	var fish_data: Variant = GameState.get_meta("selected_fish") if GameState.has_meta("selected_fish") else null
@@ -184,6 +189,106 @@ func _on_release_confirmed() -> void:
 
 		await get_tree().create_timer(1.0).timeout
 		await SceneTransition.iris_to("res://scenes/inventory/inventory.tscn")
+	else:
+		if _confirm_panel:
+			_confirm_panel.queue_free()
+			_confirm_panel = null
+
+func _on_list_pressed() -> void:
+	if _confirm_panel != null:
+		return
+	_show_list_on_market()
+
+func _show_list_on_market() -> void:
+	_confirm_panel = PanelContainer.new()
+	_confirm_panel.anchors_preset = Control.PRESET_FULL_RECT
+	_confirm_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	var stylebox := StyleBoxFlat.new()
+	stylebox.bg_color = Color(0.0, 0.0, 0.0, 0.7)
+	_confirm_panel.add_theme_stylebox_override("panel", stylebox)
+
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.set_anchors_preset(Control.PRESET_CENTER)
+	_confirm_panel.add_child(vbox)
+
+	var pixel_font = load("res://resources/fonts/pixel.ttf")
+
+	var msg := Label.new()
+	msg.text = "Set your price (1-99999 Shells):"
+	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	msg.add_theme_font_size_override("font_size", 20)
+	msg.add_theme_color_override("font_color", Color(0.96, 0.94, 0.87))
+	if pixel_font:
+		msg.add_theme_font_override("font", pixel_font)
+	vbox.add_child(msg)
+
+	var price_input := LineEdit.new()
+	price_input.placeholder_text = "Price in Shells"
+	price_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	price_input.add_theme_font_size_override("font_size", 22)
+	if pixel_font:
+		price_input.add_theme_font_override("font", pixel_font)
+	price_input.custom_minimum_size = Vector2(200, 40)
+	vbox.add_child(price_input)
+
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 10)
+	vbox.add_child(spacer)
+
+	var confirm_button := Button.new()
+	confirm_button.text = "List on Market"
+	confirm_button.add_theme_font_size_override("font_size", 20)
+	if pixel_font:
+		confirm_button.add_theme_font_override("font", pixel_font)
+	confirm_button.pressed.connect(func():
+		var price_text: String = price_input.text.strip_edges()
+		if not price_text.is_valid_int():
+			return
+		var price: int = price_text.to_int()
+		if price < 1 or price > 99999:
+			return
+		_on_list_confirmed(price)
+	)
+	vbox.add_child(confirm_button)
+
+	var cancel_button := Button.new()
+	cancel_button.text = "Cancel"
+	cancel_button.add_theme_font_size_override("font_size", 18)
+	if pixel_font:
+		cancel_button.add_theme_font_override("font", pixel_font)
+	cancel_button.pressed.connect(func():
+		_confirm_panel.queue_free()
+		_confirm_panel = null
+	)
+	vbox.add_child(cancel_button)
+
+	add_child(_confirm_panel)
+
+func _on_list_confirmed(price: int) -> void:
+	var fish_id: int = _fish_data.get("id", 0)
+	if fish_id == 0:
+		return
+
+	var result := await Network.create_listing(fish_id, price)
+	if result.status == 201:
+		if _confirm_panel:
+			for child in _confirm_panel.get_children():
+				child.queue_free()
+			var feedback := Label.new()
+			feedback.text = "Listed for %d Shells" % price
+			feedback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			feedback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			feedback.add_theme_font_size_override("font_size", 28)
+			feedback.add_theme_color_override("font_color", Color(0.5, 0.85, 1.0))
+			var pixel_font = load("res://resources/fonts/pixel.ttf")
+			if pixel_font:
+				feedback.add_theme_font_override("font", pixel_font)
+			_confirm_panel.add_child(feedback)
+
+		await get_tree().create_timer(1.0).timeout
+		await SceneTransition.iris_to("res://scenes/marketplace/marketplace.tscn")
 	else:
 		if _confirm_panel:
 			_confirm_panel.queue_free()

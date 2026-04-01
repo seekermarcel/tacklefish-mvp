@@ -50,7 +50,7 @@ func (h *Handler) Inventory(w http.ResponseWriter, r *http.Request) {
 
 	// Get total count.
 	var total int
-	err := h.DB.QueryRow(`SELECT COUNT(*) FROM fish_instances WHERE owner_id = ? AND sold_at IS NULL`, claims.PlayerID).Scan(&total)
+	err := h.DB.QueryRow(`SELECT COUNT(*) FROM fish_instances WHERE owner_id = ? AND sold_at IS NULL AND listing_id IS NULL`, claims.PlayerID).Scan(&total)
 	if err != nil {
 		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
 		return
@@ -63,7 +63,7 @@ func (h *Handler) Inventory(w http.ResponseWriter, r *http.Request) {
 			fi.size_variant, fi.color_variant, fi.caught_at
 		FROM fish_instances fi
 		JOIN fish_species fs ON fs.id = fi.species_id
-		WHERE fi.owner_id = ? AND fi.sold_at IS NULL
+		WHERE fi.owner_id = ? AND fi.sold_at IS NULL AND fi.listing_id IS NULL
 		ORDER BY fi.caught_at DESC
 		LIMIT ? OFFSET ?
 	`, claims.PlayerID, limit, offset)
@@ -114,7 +114,7 @@ func (h *Handler) FishDetail(w http.ResponseWriter, r *http.Request) {
 			fi.size_variant, fi.color_variant, fi.caught_at
 		FROM fish_instances fi
 		JOIN fish_species fs ON fs.id = fi.species_id
-		WHERE fi.id = ? AND fi.owner_id = ? AND fi.sold_at IS NULL
+		WHERE fi.id = ? AND fi.owner_id = ? AND fi.sold_at IS NULL AND fi.listing_id IS NULL
 	`, fishID, claims.PlayerID).Scan(&f.ID, &f.Species, &f.Rarity, &f.EditionNumber, &f.EditionSize, &f.SizeVariant, &f.ColorVariant, &f.CaughtAt)
 	if err == sql.ErrNoRows {
 		http.Error(w, `{"error":"fish not found"}`, http.StatusNotFound)
@@ -163,7 +163,7 @@ func (h *Handler) Release(w http.ResponseWriter, r *http.Request) {
 		SELECT fs.rarity
 		FROM fish_instances fi
 		JOIN fish_species fs ON fs.id = fi.species_id
-		WHERE fi.id = ? AND fi.owner_id = ? AND fi.sold_at IS NULL
+		WHERE fi.id = ? AND fi.owner_id = ? AND fi.sold_at IS NULL AND fi.listing_id IS NULL
 	`, fishID, claims.PlayerID).Scan(&rarity)
 	if err == sql.ErrNoRows {
 		http.Error(w, `{"error":"fish not found"}`, http.StatusNotFound)
@@ -244,7 +244,7 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.DB.QueryRow(`SELECT COUNT(*) FROM fish_instances WHERE owner_id = ? AND sold_at IS NULL`,
+	err = h.DB.QueryRow(`SELECT COUNT(*) FROM fish_instances WHERE owner_id = ? AND sold_at IS NULL AND listing_id IS NULL`,
 		claims.PlayerID).Scan(&p.CurrentCollection)
 	if err != nil {
 		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
@@ -285,7 +285,7 @@ func (h *Handler) Sell(w http.ResponseWriter, r *http.Request) {
 		SELECT fs.rarity
 		FROM fish_instances fi
 		JOIN fish_species fs ON fs.id = fi.species_id
-		WHERE fi.id = ? AND fi.owner_id = ? AND fi.sold_at IS NULL
+		WHERE fi.id = ? AND fi.owner_id = ? AND fi.sold_at IS NULL AND fi.listing_id IS NULL
 	`, fishID, claims.PlayerID).Scan(&rarity)
 	if err == sql.ErrNoRows {
 		http.Error(w, `{"error":"fish not found"}`, http.StatusNotFound)

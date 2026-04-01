@@ -69,6 +69,35 @@ func sell_fish(fish_id: int) -> Dictionary:
 func get_profile() -> Dictionary:
 	return await _do_request("/player/profile", HTTPClient.METHOD_GET)
 
+## List a fish on the marketplace at a given price.
+func create_listing(fish_id: int, price: int) -> Dictionary:
+	var body := JSON.stringify({"fish_id": fish_id, "price": price})
+	return await _do_request("/market/listings", HTTPClient.METHOD_POST, body)
+
+## Browse active marketplace listings from other players.
+func browse_listings(limit: int = 20, offset: int = 0, rarity: String = "", sort: String = "newest") -> Dictionary:
+	var url := "/market/listings?limit=%d&offset=%d&sort=%s" % [limit, offset, sort]
+	if rarity != "":
+		url += "&rarity=%s" % rarity
+	return await _do_request(url, HTTPClient.METHOD_GET)
+
+## Get your own active marketplace listings.
+func my_listings() -> Dictionary:
+	return await _do_request("/market/listings/mine", HTTPClient.METHOD_GET)
+
+## Buy a listing from the marketplace.
+func buy_listing(listing_id: int) -> Dictionary:
+	return await _do_request("/market/listings/%d/buy" % listing_id, HTTPClient.METHOD_POST)
+
+## Change the price of your own listing.
+func edit_listing_price(listing_id: int, price: int) -> Dictionary:
+	var body := JSON.stringify({"price": price})
+	return await _do_request("/market/listings/%d/price" % listing_id, HTTPClient.METHOD_PATCH, body)
+
+## Cancel your own listing (fish returns to inventory).
+func cancel_listing(listing_id: int) -> Dictionary:
+	return await _do_request("/market/listings/%d/cancel" % listing_id, HTTPClient.METHOD_POST)
+
 ## Claim an account using a backup code from a previous install.
 func claim_transfer_code(device_id: String, code: String) -> Dictionary:
 	var body := JSON.stringify({"device_id": device_id, "transfer_code": code})
