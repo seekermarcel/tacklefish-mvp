@@ -91,3 +91,25 @@ func TestXPForNextLevel(t *testing.T) {
 		}
 	}
 }
+
+func TestSellPrice(t *testing.T) {
+	tests := []struct {
+		rarity string
+		want   int
+	}{
+		{"common", 5},
+		{"uncommon", 10},
+		{"rare", 25},
+		{"epic", 50},
+		{"legendary", 100},
+		{"unknown", 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.rarity, func(t *testing.T) {
+			got := game.SellPrice(tt.rarity)
+			if got != tt.want {
+				t.Errorf("SellPrice(%q) = %d, want %d", tt.rarity, got, tt.want)
+			}
+		})
+	}
+}

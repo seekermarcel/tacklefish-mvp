@@ -5,6 +5,7 @@ extends Control
 @onready var level_label: Label = %LevelLabel
 @onready var xp_label: Label = %XPLabel
 @onready var xp_bar: ProgressBar = %XPBar
+@onready var shells_label: Label = %ShellsLabel
 @onready var total_caught_label: Label = %TotalCaughtLabel
 @onready var total_released_label: Label = %TotalReleasedLabel
 @onready var collection_label: Label = %CollectionLabel
@@ -38,16 +39,19 @@ func _load_profile() -> void:
 	var xp_next: int = data.get("xp_next_level", -1)
 	var total_caught: int = data.get("total_caught", 0)
 	var total_released: int = data.get("total_released", 0)
+	var shells: int = data.get("shells", 0)
 	var current_collection: int = data.get("current_collection", 0)
 
 	# Update GameState cache.
 	GameState.xp = xp
 	GameState.level = level
+	GameState.shells = shells
 	GameState.total_caught = total_caught
 	GameState.total_released = total_released
 
 	player_id_label.text = "Player #%d" % player_id
 	level_label.text = "Level %d" % level
+	shells_label.text = "Shells: %d" % shells
 	total_caught_label.text = "Total Caught: %d" % total_caught
 	total_released_label.text = "Total Released: %d" % total_released
 	collection_label.text = "Collection: %d" % current_collection

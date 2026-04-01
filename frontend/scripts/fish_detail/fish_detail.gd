@@ -11,6 +11,7 @@ extends Control
 @onready var back_to_inventory_button: Label = %BackToInventoryButton
 @onready var back_to_pond_button: Label = %BackToPondButton
 @onready var release_fish_button: Label = %ReleaseFishButton
+@onready var sell_fish_button: Label = %SellFishButton
 
 var _fish_data: Dictionary = {}
 var _confirm_panel: PanelContainer
@@ -27,6 +28,10 @@ func _ready() -> void:
 	release_fish_button.gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			_on_release_pressed()
+	)
+	sell_fish_button.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_on_sell_pressed()
 	)
 
 	var fish_data: Variant = GameState.get_meta("selected_fish") if GameState.has_meta("selected_fish") else null
@@ -172,6 +177,97 @@ func _on_release_confirmed() -> void:
 			feedback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			feedback.add_theme_font_size_override("font_size", 32)
 			feedback.add_theme_color_override("font_color", Color(0.4, 1.0, 0.5))
+			var pixel_font = load("res://resources/fonts/pixel.ttf")
+			if pixel_font:
+				feedback.add_theme_font_override("font", pixel_font)
+			_confirm_panel.add_child(feedback)
+
+		await get_tree().create_timer(1.0).timeout
+		await SceneTransition.iris_to("res://scenes/inventory/inventory.tscn")
+	else:
+		if _confirm_panel:
+			_confirm_panel.queue_free()
+			_confirm_panel = null
+
+func _on_sell_pressed() -> void:
+	if _confirm_panel != null:
+		return
+	_show_sell_confirm()
+
+func _show_sell_confirm() -> void:
+	_confirm_panel = PanelContainer.new()
+	_confirm_panel.anchors_preset = Control.PRESET_FULL_RECT
+	_confirm_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	var stylebox := StyleBoxFlat.new()
+	stylebox.bg_color = Color(0.0, 0.0, 0.0, 0.7)
+	_confirm_panel.add_theme_stylebox_override("panel", stylebox)
+
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.set_anchors_preset(Control.PRESET_CENTER)
+	_confirm_panel.add_child(vbox)
+
+	var species_name: String = _fish_data.get("species", "this fish")
+	var rarity: String = _fish_data.get("rarity", "common")
+	var sell_map := {"common": 5, "uncommon": 10, "rare": 25, "epic": 50, "legendary": 100}
+	var sell_price: int = sell_map.get(rarity, 1)
+
+	var pixel_font = load("res://resources/fonts/pixel.ttf")
+
+	var msg := Label.new()
+	msg.text = "Sell %s for %d Shells?\nThis edition will be gone forever." % [species_name, sell_price]
+	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	msg.add_theme_font_size_override("font_size", 20)
+	msg.add_theme_color_override("font_color", Color(0.96, 0.94, 0.87))
+	if pixel_font:
+		msg.add_theme_font_override("font", pixel_font)
+	vbox.add_child(msg)
+
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 20)
+	vbox.add_child(spacer)
+
+	var confirm_button := Button.new()
+	confirm_button.text = "Yes, sell"
+	confirm_button.add_theme_font_size_override("font_size", 20)
+	if pixel_font:
+		confirm_button.add_theme_font_override("font", pixel_font)
+	confirm_button.pressed.connect(_on_sell_confirmed)
+	vbox.add_child(confirm_button)
+
+	var cancel_button := Button.new()
+	cancel_button.text = "Cancel"
+	cancel_button.add_theme_font_size_override("font_size", 18)
+	if pixel_font:
+		cancel_button.add_theme_font_override("font", pixel_font)
+	cancel_button.pressed.connect(func():
+		_confirm_panel.queue_free()
+		_confirm_panel = null
+	)
+	vbox.add_child(cancel_button)
+
+	add_child(_confirm_panel)
+
+func _on_sell_confirmed() -> void:
+	var fish_id: int = _fish_data.get("id", 0)
+	if fish_id == 0:
+		return
+
+	var result := await Network.sell_fish(fish_id)
+	if result.status == 200:
+		var shells_earned: int = result.data.get("shells_earned", 0)
+		GameState.shells = result.data.get("total_shells", GameState.shells)
+
+		if _confirm_panel:
+			for child in _confirm_panel.get_children():
+				child.queue_free()
+			var feedback := Label.new()
+			feedback.text = "+%d Shells" % shells_earned
+			feedback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			feedback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			feedback.add_theme_font_size_override("font_size", 32)
+			feedback.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4))
 			var pixel_font = load("res://resources/fonts/pixel.ttf")
 			if pixel_font:
 				feedback.add_theme_font_override("font", pixel_font)

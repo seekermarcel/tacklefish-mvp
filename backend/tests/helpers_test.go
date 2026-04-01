@@ -18,7 +18,8 @@ const schema = `
 		created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
 		xp              INTEGER NOT NULL DEFAULT 0,
 		total_caught    INTEGER NOT NULL DEFAULT 0,
-		total_released  INTEGER NOT NULL DEFAULT 0
+		total_released  INTEGER NOT NULL DEFAULT 0,
+		shells          INTEGER NOT NULL DEFAULT 0
 	);
 	CREATE TABLE fish_species (
 		id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,6 +36,7 @@ const schema = `
 		size_variant   TEXT    NOT NULL,
 		color_variant  TEXT    NOT NULL,
 		caught_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+		sold_at        TEXT,
 		UNIQUE(species_id, edition_number)
 	);
 `

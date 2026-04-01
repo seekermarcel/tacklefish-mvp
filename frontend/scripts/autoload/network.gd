@@ -61,6 +61,10 @@ func get_transfer_code() -> Dictionary:
 func release_fish(fish_id: int) -> Dictionary:
 	return await _do_request("/player/inventory/%d/release" % fish_id, HTTPClient.METHOD_POST)
 
+## Quick-sell a fish for shells. Edition is permanently consumed.
+func sell_fish(fish_id: int) -> Dictionary:
+	return await _do_request("/player/inventory/%d/sell" % fish_id, HTTPClient.METHOD_POST)
+
 ## Get the player's profile (XP, level, stats).
 func get_profile() -> Dictionary:
 	return await _do_request("/player/profile", HTTPClient.METHOD_GET)

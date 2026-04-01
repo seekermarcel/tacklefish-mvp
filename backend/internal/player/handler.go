@@ -50,7 +50,7 @@ func (h *Handler) Inventory(w http.ResponseWriter, r *http.Request) {
 
 	// Get total count.
 	var total int
-	err := h.DB.QueryRow(`SELECT COUNT(*) FROM fish_instances WHERE owner_id = ?`, claims.PlayerID).Scan(&total)
+	err := h.DB.QueryRow(`SELECT COUNT(*) FROM fish_instances WHERE owner_id = ? AND sold_at IS NULL`, claims.PlayerID).Scan(&total)
 	if err != nil {
 		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
 		return
@@ -63,7 +63,7 @@ func (h *Handler) Inventory(w http.ResponseWriter, r *http.Request) {
 			fi.size_variant, fi.color_variant, fi.caught_at
 		FROM fish_instances fi
 		JOIN fish_species fs ON fs.id = fi.species_id
-		WHERE fi.owner_id = ?
+		WHERE fi.owner_id = ? AND fi.sold_at IS NULL
 		ORDER BY fi.caught_at DESC
 		LIMIT ? OFFSET ?
 	`, claims.PlayerID, limit, offset)
@@ -114,7 +114,7 @@ func (h *Handler) FishDetail(w http.ResponseWriter, r *http.Request) {
 			fi.size_variant, fi.color_variant, fi.caught_at
 		FROM fish_instances fi
 		JOIN fish_species fs ON fs.id = fi.species_id
-		WHERE fi.id = ? AND fi.owner_id = ?
+		WHERE fi.id = ? AND fi.owner_id = ? AND fi.sold_at IS NULL
 	`, fishID, claims.PlayerID).Scan(&f.ID, &f.Species, &f.Rarity, &f.EditionNumber, &f.EditionSize, &f.SizeVariant, &f.ColorVariant, &f.CaughtAt)
 	if err == sql.ErrNoRows {
 		http.Error(w, `{"error":"fish not found"}`, http.StatusNotFound)
@@ -163,7 +163,7 @@ func (h *Handler) Release(w http.ResponseWriter, r *http.Request) {
 		SELECT fs.rarity
 		FROM fish_instances fi
 		JOIN fish_species fs ON fs.id = fi.species_id
-		WHERE fi.id = ? AND fi.owner_id = ?
+		WHERE fi.id = ? AND fi.owner_id = ? AND fi.sold_at IS NULL
 	`, fishID, claims.PlayerID).Scan(&rarity)
 	if err == sql.ErrNoRows {
 		http.Error(w, `{"error":"fish not found"}`, http.StatusNotFound)
@@ -209,11 +209,18 @@ func (h *Handler) Release(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+type sellResponse struct {
+	Sold        bool `json:"sold"`
+	ShellsEarned int  `json:"shells_earned"`
+	TotalShells  int  `json:"total_shells"`
+}
+
 type profileResponse struct {
 	PlayerID          int64  `json:"player_id"`
 	XP                int    `json:"xp"`
 	Level             int    `json:"level"`
 	XPNextLevel       int    `json:"xp_next_level"`
+	Shells            int    `json:"shells"`
 	TotalCaught       int    `json:"total_caught"`
 	TotalReleased     int    `json:"total_released"`
 	CurrentCollection int    `json:"current_collection"`
@@ -229,15 +236,15 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 
 	var p profileResponse
 	err := h.DB.QueryRow(`
-		SELECT id, xp, total_caught, total_released, created_at
+		SELECT id, xp, shells, total_caught, total_released, created_at
 		FROM players WHERE id = ?
-	`, claims.PlayerID).Scan(&p.PlayerID, &p.XP, &p.TotalCaught, &p.TotalReleased, &p.CreatedAt)
+	`, claims.PlayerID).Scan(&p.PlayerID, &p.XP, &p.Shells, &p.TotalCaught, &p.TotalReleased, &p.CreatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
 		return
 	}
 
-	err = h.DB.QueryRow(`SELECT COUNT(*) FROM fish_instances WHERE owner_id = ?`,
+	err = h.DB.QueryRow(`SELECT COUNT(*) FROM fish_instances WHERE owner_id = ? AND sold_at IS NULL`,
 		claims.PlayerID).Scan(&p.CurrentCollection)
 	if err != nil {
 		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
@@ -249,4 +256,75 @@ func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(p)
+}
+
+func (h *Handler) Sell(w http.ResponseWriter, r *http.Request) {
+	claims := auth.GetClaims(r)
+	if claims == nil {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	idStr := r.PathValue("id")
+	fishID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, `{"error":"invalid fish id"}`, http.StatusBadRequest)
+		return
+	}
+
+	tx, err := h.DB.Begin()
+	if err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	// Verify ownership, not already sold, and get rarity.
+	var rarity string
+	err = tx.QueryRow(`
+		SELECT fs.rarity
+		FROM fish_instances fi
+		JOIN fish_species fs ON fs.id = fi.species_id
+		WHERE fi.id = ? AND fi.owner_id = ? AND fi.sold_at IS NULL
+	`, fishID, claims.PlayerID).Scan(&rarity)
+	if err == sql.ErrNoRows {
+		http.Error(w, `{"error":"fish not found"}`, http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// Soft-delete: mark as sold (edition stays consumed).
+	if _, err := tx.Exec(`UPDATE fish_instances SET sold_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`, fishID); err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// Award shells.
+	shellsEarned := game.SellPrice(rarity)
+	if _, err := tx.Exec(`UPDATE players SET shells = shells + ? WHERE id = ?`,
+		shellsEarned, claims.PlayerID); err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	var totalShells int
+	if err := tx.QueryRow(`SELECT shells FROM players WHERE id = ?`, claims.PlayerID).Scan(&totalShells); err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(sellResponse{
+		Sold:         true,
+		ShellsEarned: shellsEarned,
+		TotalShells:  totalShells,
+	})
 }

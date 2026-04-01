@@ -90,7 +90,22 @@ text = "0 / 100 XP"
 horizontal_alignment = 1
 
 [node name="Spacer2" type="Control" parent="VBox"]
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+
+[node name="ShellsLabel" type="Label" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1.0, 0.9, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.05, 0.04, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 22
+text = "Shells: 0"
+horizontal_alignment = 1
+
+[node name="Spacer2b" type="Control" parent="VBox"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
 [node name="TotalCaughtLabel" type="Label" parent="VBox"]
@@ -134,7 +149,7 @@ theme_override_colors/font_outline_color = Color(0.12, 0.1, 0.08, 1)
 theme_override_constants/outline_size = 6
 theme_override_fonts/font = ExtResource("2")
 theme_override_font_sizes/font_size = 22
-text = "Back to Menu"
+text = "Back to Pond"
 horizontal_alignment = 1
 
 [node name="StatusLabel" type="Label" parent="VBox"]

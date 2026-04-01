@@ -8,6 +8,7 @@ var inventory: Array = []
 var pool: Array = []
 var xp: int = 0
 var level: int = 0
+var shells: int = 0
 var total_caught: int = 0
 var total_released: int = 0
 
@@ -20,5 +21,6 @@ func clear() -> void:
 	pool.clear()
 	xp = 0
 	level = 0
+	shells = 0
 	total_caught = 0
 	total_released = 0
