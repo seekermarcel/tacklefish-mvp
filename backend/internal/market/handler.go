@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/tacklefish/backend/internal/auth"
+	"github.com/tacklefish/backend/internal/game"
 )
 
 type Handler struct {
@@ -312,14 +313,18 @@ func (h *Handler) BuyListing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Deduct from buyer.
+	// Calculate tax.
+	tax, sellerPayout := game.MarketTax(price)
+
+	// Deduct full price from buyer.
 	if _, err := tx.Exec(`UPDATE players SET shells = shells - ? WHERE id = ?`, price, claims.PlayerID); err != nil {
 		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
 		return
 	}
 
-	// Credit seller.
-	if _, err := tx.Exec(`UPDATE players SET shells = shells + ? WHERE id = ?`, price, sellerID); err != nil {
+	// Credit seller (price minus tax). Tax is removed from the economy.
+	_ = tax // tax Shells vanish — intentional sink
+	if _, err := tx.Exec(`UPDATE players SET shells = shells + ? WHERE id = ?`, sellerPayout, sellerID); err != nil {
 		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
 		return
 	}

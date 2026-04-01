@@ -92,6 +92,49 @@ func TestXPForNextLevel(t *testing.T) {
 	}
 }
 
+func TestShellsForCatch(t *testing.T) {
+	tests := []struct {
+		rarity string
+		want   int
+	}{
+		{"common", 2},
+		{"uncommon", 5},
+		{"rare", 12},
+		{"epic", 30},
+		{"legendary", 75},
+		{"unknown", 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.rarity, func(t *testing.T) {
+			got := game.ShellsForCatch(tt.rarity)
+			if got != tt.want {
+				t.Errorf("ShellsForCatch(%q) = %d, want %d", tt.rarity, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMarketTax(t *testing.T) {
+	tests := []struct {
+		price      int
+		wantTax    int
+		wantPayout int
+	}{
+		{100, 10, 90},
+		{50, 5, 45},
+		{10, 1, 9},
+		{5, 1, 4},     // minimum tax of 1
+		{1, 1, 0},     // minimum tax of 1, seller gets 0
+		{1000, 100, 900},
+	}
+	for _, tt := range tests {
+		tax, payout := game.MarketTax(tt.price)
+		if tax != tt.wantTax || payout != tt.wantPayout {
+			t.Errorf("MarketTax(%d) = (%d, %d), want (%d, %d)", tt.price, tax, payout, tt.wantTax, tt.wantPayout)
+		}
+	}
+}
+
 func TestSellPrice(t *testing.T) {
 	tests := []struct {
 		rarity string

@@ -447,12 +447,22 @@ func TestCatchAwardsXP(t *testing.T) {
 	if caught.XPEarned <= 0 {
 		t.Errorf("xp_earned = %d, want > 0", caught.XPEarned)
 	}
+	if caught.ShellsEarned <= 0 {
+		t.Errorf("shells_earned = %d, want > 0", caught.ShellsEarned)
+	}
 
 	// Verify player XP in DB.
 	var xp int
 	db.QueryRow(`SELECT xp FROM players WHERE id = 1`).Scan(&xp)
 	if xp != caught.XPEarned {
 		t.Errorf("player xp = %d, want %d", xp, caught.XPEarned)
+	}
+
+	// Verify player Shells in DB.
+	var shells int
+	db.QueryRow(`SELECT shells FROM players WHERE id = 1`).Scan(&shells)
+	if shells != caught.ShellsEarned {
+		t.Errorf("player shells = %d, want %d", shells, caught.ShellsEarned)
 	}
 
 	// Verify total_caught incremented.

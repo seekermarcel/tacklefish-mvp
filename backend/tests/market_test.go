@@ -264,11 +264,11 @@ func TestBuyListingSuccess(t *testing.T) {
 		t.Error("listing_id should be NULL after purchase")
 	}
 
-	// Seller should have received shells.
+	// Seller should have received shells minus 10% tax.
 	var sellerShells int
 	db.QueryRow(`SELECT shells FROM players WHERE id = 1`).Scan(&sellerShells)
-	if sellerShells != 50 {
-		t.Errorf("seller shells = %d, want 50", sellerShells)
+	if sellerShells != 45 {
+		t.Errorf("seller shells = %d, want 45 (50 - 10%% tax)", sellerShells)
 	}
 
 	// Listing should be marked sold.

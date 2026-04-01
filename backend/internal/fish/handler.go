@@ -24,9 +24,10 @@ type CaughtFish struct {
 	Rarity        Rarity       `json:"rarity"`
 	EditionNumber int          `json:"edition_number"`
 	EditionSize   int          `json:"edition_size"`
-	SizeVariant   SizeVariant  `json:"size_variant"`
-	ColorVariant  ColorVariant `json:"color_variant"`
-	XPEarned      int          `json:"xp_earned"`
+	SizeVariant    SizeVariant  `json:"size_variant"`
+	ColorVariant   ColorVariant `json:"color_variant"`
+	XPEarned       int          `json:"xp_earned"`
+	ShellsEarned   int          `json:"shells_earned"`
 }
 
 func (h *Handler) Catch(w http.ResponseWriter, r *http.Request) {
@@ -87,10 +88,11 @@ func (h *Handler) Catch(w http.ResponseWriter, r *http.Request) {
 
 	fishID, _ := result.LastInsertId()
 
-	// Award catch XP and increment total_caught.
+	// Award catch XP, Shells, and increment total_caught.
 	xpEarned := game.XPForCatch(string(species.Rarity))
-	h.DB.Exec(`UPDATE players SET xp = xp + ?, total_caught = total_caught + 1 WHERE id = ?`,
-		xpEarned, claims.PlayerID)
+	shellsEarned := game.ShellsForCatch(string(species.Rarity))
+	h.DB.Exec(`UPDATE players SET xp = xp + ?, shells = shells + ?, total_caught = total_caught + 1 WHERE id = ?`,
+		xpEarned, shellsEarned, claims.PlayerID)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(CaughtFish{
@@ -102,6 +104,7 @@ func (h *Handler) Catch(w http.ResponseWriter, r *http.Request) {
 		SizeVariant:   size,
 		ColorVariant:  color,
 		XPEarned:      xpEarned,
+		ShellsEarned:  shellsEarned,
 	})
 }
 
