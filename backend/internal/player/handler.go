@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/tacklefish/backend/internal/auth"
+	"github.com/tacklefish/backend/internal/game"
 )
 
 type Handler struct {
@@ -126,4 +127,126 @@ func (h *Handler) FishDetail(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(f)
+}
+
+type releaseResponse struct {
+	Released bool `json:"released"`
+	XPEarned int  `json:"xp_earned"`
+	TotalXP  int  `json:"total_xp"`
+	Level    int  `json:"level"`
+}
+
+func (h *Handler) Release(w http.ResponseWriter, r *http.Request) {
+	claims := auth.GetClaims(r)
+	if claims == nil {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	idStr := r.PathValue("id")
+	fishID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, `{"error":"invalid fish id"}`, http.StatusBadRequest)
+		return
+	}
+
+	tx, err := h.DB.Begin()
+	if err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	// Verify ownership and get rarity.
+	var rarity string
+	err = tx.QueryRow(`
+		SELECT fs.rarity
+		FROM fish_instances fi
+		JOIN fish_species fs ON fs.id = fi.species_id
+		WHERE fi.id = ? AND fi.owner_id = ?
+	`, fishID, claims.PlayerID).Scan(&rarity)
+	if err == sql.ErrNoRows {
+		http.Error(w, `{"error":"fish not found"}`, http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// Delete the fish instance.
+	if _, err := tx.Exec(`DELETE FROM fish_instances WHERE id = ?`, fishID); err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// Award XP and update release counter.
+	xpEarned := game.XPForRelease(rarity)
+	if _, err := tx.Exec(`UPDATE players SET xp = xp + ?, total_released = total_released + 1 WHERE id = ?`,
+		xpEarned, claims.PlayerID); err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// Read back the new XP total.
+	var totalXP int
+	if err := tx.QueryRow(`SELECT xp FROM players WHERE id = ?`, claims.PlayerID).Scan(&totalXP); err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(releaseResponse{
+		Released: true,
+		XPEarned: xpEarned,
+		TotalXP:  totalXP,
+		Level:    game.LevelFromXP(totalXP),
+	})
+}
+
+type profileResponse struct {
+	PlayerID          int64  `json:"player_id"`
+	XP                int    `json:"xp"`
+	Level             int    `json:"level"`
+	XPNextLevel       int    `json:"xp_next_level"`
+	TotalCaught       int    `json:"total_caught"`
+	TotalReleased     int    `json:"total_released"`
+	CurrentCollection int    `json:"current_collection"`
+	CreatedAt         string `json:"created_at"`
+}
+
+func (h *Handler) Profile(w http.ResponseWriter, r *http.Request) {
+	claims := auth.GetClaims(r)
+	if claims == nil {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	var p profileResponse
+	err := h.DB.QueryRow(`
+		SELECT id, xp, total_caught, total_released, created_at
+		FROM players WHERE id = ?
+	`, claims.PlayerID).Scan(&p.PlayerID, &p.XP, &p.TotalCaught, &p.TotalReleased, &p.CreatedAt)
+	if err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	err = h.DB.QueryRow(`SELECT COUNT(*) FROM fish_instances WHERE owner_id = ?`,
+		claims.PlayerID).Scan(&p.CurrentCollection)
+	if err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	p.Level = game.LevelFromXP(p.XP)
+	p.XPNextLevel = game.XPForNextLevel(p.Level)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(p)
 }

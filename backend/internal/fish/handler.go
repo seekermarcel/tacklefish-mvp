@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/tacklefish/backend/internal/auth"
+	"github.com/tacklefish/backend/internal/game"
 )
 
 type Handler struct {
@@ -25,6 +26,7 @@ type CaughtFish struct {
 	EditionSize   int          `json:"edition_size"`
 	SizeVariant   SizeVariant  `json:"size_variant"`
 	ColorVariant  ColorVariant `json:"color_variant"`
+	XPEarned      int          `json:"xp_earned"`
 }
 
 func (h *Handler) Catch(w http.ResponseWriter, r *http.Request) {
@@ -85,6 +87,11 @@ func (h *Handler) Catch(w http.ResponseWriter, r *http.Request) {
 
 	fishID, _ := result.LastInsertId()
 
+	// Award catch XP and increment total_caught.
+	xpEarned := game.XPForCatch(string(species.Rarity))
+	h.DB.Exec(`UPDATE players SET xp = xp + ?, total_caught = total_caught + 1 WHERE id = ?`,
+		xpEarned, claims.PlayerID)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(CaughtFish{
 		ID:            fishID,
@@ -94,6 +101,7 @@ func (h *Handler) Catch(w http.ResponseWriter, r *http.Request) {
 		EditionSize:   species.EditionSize,
 		SizeVariant:   size,
 		ColorVariant:  color,
+		XPEarned:      xpEarned,
 	})
 }
 

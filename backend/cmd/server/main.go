@@ -54,6 +54,8 @@ func main() {
 	protected.HandleFunc("GET /fish/pool", fishHandler.Pool)
 	protected.HandleFunc("GET /player/inventory", playerHandler.Inventory)
 	protected.HandleFunc("GET /player/inventory/{id}", playerHandler.FishDetail)
+	protected.HandleFunc("POST /player/inventory/{id}/release", playerHandler.Release)
+	protected.HandleFunc("GET /player/profile", playerHandler.Profile)
 	protected.HandleFunc("POST /auth/transfer-code", authHandler.GenerateTransferCode)
 	protected.HandleFunc("GET /auth/transfer-code", authHandler.GetTransferCode)
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/tacklefish/backend/internal/auth"
 	"github.com/tacklefish/backend/internal/fish"
+	"github.com/tacklefish/backend/internal/game"
 	"github.com/tacklefish/backend/internal/player"
 )
 
@@ -310,5 +311,207 @@ func TestFishDetailHandlerInvalidID(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("status = %d, want 400", w.Code)
+	}
+}
+
+func TestReleaseFishSuccess(t *testing.T) {
+	db := setupMemoryDB(t)
+	speciesID := seedSpecies(t, db, "Release Fish", fish.Common, 10)
+	catchFish(t, db, speciesID, 1)
+
+	handler := &player.Handler{DB: db}
+
+	req := requestWithClaims("POST", "/player/inventory/1/release", "", 1)
+	req.SetPathValue("id", "1")
+	w := httptest.NewRecorder()
+	handler.Release(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body = %s", w.Code, w.Body.String())
+	}
+
+	var resp struct {
+		Released bool `json:"released"`
+		XPEarned int  `json:"xp_earned"`
+		TotalXP  int  `json:"total_xp"`
+		Level    int  `json:"level"`
+	}
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatal("decode:", err)
+	}
+	if !resp.Released {
+		t.Error("expected released=true")
+	}
+	if resp.XPEarned != game.XPForRelease("common") {
+		t.Errorf("xp_earned = %d, want %d", resp.XPEarned, game.XPForRelease("common"))
+	}
+
+	// Fish should be gone from inventory.
+	var count int
+	db.QueryRow(`SELECT COUNT(*) FROM fish_instances WHERE owner_id = 1`).Scan(&count)
+	if count != 0 {
+		t.Errorf("fish count = %d, want 0 after release", count)
+	}
+
+	// Player stats should be updated.
+	var totalReleased int
+	db.QueryRow(`SELECT total_released FROM players WHERE id = 1`).Scan(&totalReleased)
+	if totalReleased != 1 {
+		t.Errorf("total_released = %d, want 1", totalReleased)
+	}
+}
+
+func TestReleaseFishNotFound(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &player.Handler{DB: db}
+
+	req := requestWithClaims("POST", "/player/inventory/999/release", "", 1)
+	req.SetPathValue("id", "999")
+	w := httptest.NewRecorder()
+	handler.Release(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("status = %d, want 404", w.Code)
+	}
+}
+
+func TestReleaseFishWrongOwner(t *testing.T) {
+	db := setupMemoryDB(t)
+	db.Exec(`INSERT INTO players (device_id) VALUES ('other-player')`)
+	speciesID := seedSpecies(t, db, "Owned Fish", fish.Common, 10)
+	catchFish(t, db, speciesID, 1) // Owned by player 1.
+
+	handler := &player.Handler{DB: db}
+
+	// Request as player 2.
+	req := requestWithClaims("POST", "/player/inventory/1/release", "", 2)
+	req.SetPathValue("id", "1")
+	w := httptest.NewRecorder()
+	handler.Release(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("status = %d, want 404 (wrong owner)", w.Code)
+	}
+}
+
+func TestReleaseFishEditionRecycled(t *testing.T) {
+	db := setupMemoryDB(t)
+	// Species with edition_size=1 — only one can exist at a time.
+	speciesID := seedSpecies(t, db, "Solo Fish", fish.Common, 1)
+	catchFish(t, db, speciesID, 1)
+
+	handler := &player.Handler{DB: db}
+
+	// Pool should be depleted.
+	var remaining int
+	db.QueryRow(`SELECT ? - COUNT(*) FROM fish_instances WHERE species_id = ?`, 1, speciesID).Scan(&remaining)
+	if remaining != 0 {
+		t.Fatalf("remaining = %d, want 0 before release", remaining)
+	}
+
+	// Release the fish.
+	req := requestWithClaims("POST", "/player/inventory/1/release", "", 1)
+	req.SetPathValue("id", "1")
+	w := httptest.NewRecorder()
+	handler.Release(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+
+	// Edition should be available again.
+	db.QueryRow(`SELECT ? - COUNT(*) FROM fish_instances WHERE species_id = ?`, 1, speciesID).Scan(&remaining)
+	if remaining != 1 {
+		t.Errorf("remaining = %d, want 1 after release", remaining)
+	}
+}
+
+func TestCatchAwardsXP(t *testing.T) {
+	db := setupMemoryDB(t)
+	seedAllMVPSpecies(t, db)
+
+	handler := &fish.Handler{DB: db}
+
+	req := requestWithClaims("POST", "/fish/catch", `{"timing_score":0.5}`, 1)
+	w := httptest.NewRecorder()
+	handler.Catch(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body = %s", w.Code, w.Body.String())
+	}
+
+	var caught fish.CaughtFish
+	json.NewDecoder(w.Body).Decode(&caught)
+	if caught.XPEarned <= 0 {
+		t.Errorf("xp_earned = %d, want > 0", caught.XPEarned)
+	}
+
+	// Verify player XP in DB.
+	var xp int
+	db.QueryRow(`SELECT xp FROM players WHERE id = 1`).Scan(&xp)
+	if xp != caught.XPEarned {
+		t.Errorf("player xp = %d, want %d", xp, caught.XPEarned)
+	}
+
+	// Verify total_caught incremented.
+	var totalCaught int
+	db.QueryRow(`SELECT total_caught FROM players WHERE id = 1`).Scan(&totalCaught)
+	if totalCaught != 1 {
+		t.Errorf("total_caught = %d, want 1", totalCaught)
+	}
+}
+
+func TestProfileHandler(t *testing.T) {
+	db := setupMemoryDB(t)
+	speciesID := seedSpecies(t, db, "Profile Fish", fish.Uncommon, 100)
+
+	// Catch 3 fish manually (bypasses XP logic).
+	catchFish(t, db, speciesID, 1)
+	catchFish(t, db, speciesID, 2)
+	catchFish(t, db, speciesID, 3)
+
+	// Simulate XP and counters.
+	db.Exec(`UPDATE players SET xp = 150, total_caught = 3, total_released = 0 WHERE id = 1`)
+
+	handler := &player.Handler{DB: db}
+
+	req := requestWithClaims("GET", "/player/profile", "", 1)
+	w := httptest.NewRecorder()
+	handler.Profile(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body = %s", w.Code, w.Body.String())
+	}
+
+	var resp struct {
+		PlayerID          int64  `json:"player_id"`
+		XP                int    `json:"xp"`
+		Level             int    `json:"level"`
+		XPNextLevel       int    `json:"xp_next_level"`
+		TotalCaught       int    `json:"total_caught"`
+		TotalReleased     int    `json:"total_released"`
+		CurrentCollection int    `json:"current_collection"`
+		CreatedAt         string `json:"created_at"`
+	}
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatal("decode:", err)
+	}
+	if resp.PlayerID != 1 {
+		t.Errorf("player_id = %d, want 1", resp.PlayerID)
+	}
+	if resp.XP != 150 {
+		t.Errorf("xp = %d, want 150", resp.XP)
+	}
+	if resp.Level != 2 {
+		t.Errorf("level = %d, want 2 (150 XP >= 100 threshold)", resp.Level)
+	}
+	if resp.XPNextLevel != 300 {
+		t.Errorf("xp_next_level = %d, want 300", resp.XPNextLevel)
+	}
+	if resp.TotalCaught != 3 {
+		t.Errorf("total_caught = %d, want 3", resp.TotalCaught)
+	}
+	if resp.CurrentCollection != 3 {
+		t.Errorf("current_collection = %d, want 3", resp.CurrentCollection)
 	}
 }

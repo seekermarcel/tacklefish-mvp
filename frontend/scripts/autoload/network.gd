@@ -57,6 +57,14 @@ func generate_transfer_code() -> Dictionary:
 func get_transfer_code() -> Dictionary:
 	return await _do_request("/auth/transfer-code", HTTPClient.METHOD_GET)
 
+## Release a fish back to the wild. Returns XP earned.
+func release_fish(fish_id: int) -> Dictionary:
+	return await _do_request("/player/inventory/%d/release" % fish_id, HTTPClient.METHOD_POST)
+
+## Get the player's profile (XP, level, stats).
+func get_profile() -> Dictionary:
+	return await _do_request("/player/profile", HTTPClient.METHOD_GET)
+
 ## Claim an account using a backup code from a previous install.
 func claim_transfer_code(device_id: String, code: String) -> Dictionary:
 	var body := JSON.stringify({"device_id": device_id, "transfer_code": code})
