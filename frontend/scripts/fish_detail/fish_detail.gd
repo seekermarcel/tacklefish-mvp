@@ -113,11 +113,9 @@ func _show_release_confirm() -> void:
 
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.anchor_left = 0.1
-	vbox.anchor_right = 0.9
-	vbox.anchor_top = 0.3
-	vbox.anchor_bottom = 0.7
 	vbox.set_anchors_preset(Control.PRESET_CENTER)
+	vbox.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	vbox.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_confirm_panel.add_child(vbox)
 
 	var species_name: String = _fish_data.get("species", "this fish")
@@ -211,6 +209,8 @@ func _show_list_on_market() -> void:
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.set_anchors_preset(Control.PRESET_CENTER)
+	vbox.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	vbox.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_confirm_panel.add_child(vbox)
 
 	var pixel_font = load("res://resources/fonts/pixel.ttf")
@@ -311,6 +311,8 @@ func _show_sell_confirm() -> void:
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.set_anchors_preset(Control.PRESET_CENTER)
+	vbox.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	vbox.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_confirm_panel.add_child(vbox)
 
 	var species_name: String = _fish_data.get("species", "this fish")
@@ -384,6 +386,14 @@ func _on_sell_confirmed() -> void:
 		if _confirm_panel:
 			_confirm_panel.queue_free()
 			_confirm_panel = null
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		if _confirm_panel != null:
+			_confirm_panel.queue_free()
+			_confirm_panel = null
+		else:
+			_on_back_to_inventory()
 
 func _on_back_to_inventory() -> void:
 	await SceneTransition.iris_to("res://scenes/inventory/inventory.tscn")
