@@ -498,5 +498,9 @@ func _on_card_pressed(data: Dictionary) -> void:
 	GameState.set_meta("selected_fish", data)
 	_play_closing("res://scenes/fish_detail/fish_detail.tscn")
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		_on_back()
+
 func _on_back() -> void:
 	_play_closing("res://scenes/fishing/fishing.tscn")

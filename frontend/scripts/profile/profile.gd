@@ -72,5 +72,9 @@ func _load_profile() -> void:
 		xp_bar.value = 1
 		xp_label.text = "%d XP (MAX)" % xp
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		_on_back_pressed()
+
 func _on_back_pressed() -> void:
 	await SceneTransition.iris_to("res://scenes/fishing/fishing.tscn")

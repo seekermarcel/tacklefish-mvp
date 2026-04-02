@@ -457,6 +457,13 @@ func _show_feedback(text: String, color: Color) -> void:
 			feedback.add_theme_font_override("font", pixel_font)
 		_confirm_panel.add_child(feedback)
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		if _confirm_panel != null:
+			_dismiss_confirm()
+		else:
+			await SceneTransition.iris_to("res://scenes/fishing/fishing.tscn")
+
 func _dismiss_confirm() -> void:
 	if _confirm_panel:
 		_confirm_panel.queue_free()
