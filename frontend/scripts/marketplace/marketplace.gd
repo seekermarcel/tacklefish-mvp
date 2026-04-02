@@ -10,10 +10,13 @@ const RARITY_COLORS := {
 	"legendary": Color(1.0, 0.60, 0.0),
 }
 
+const DRAG_THRESHOLD := 12.0
+
 @onready var browse_tab_button: Label = %BrowseTabButton
 @onready var my_listings_tab_button: Label = %MyListingsTabButton
 @onready var filter_row: HBoxContainer = %FilterRow
 @onready var sort_button: Button = %SortButton
+@onready var scroll_container: ScrollContainer = %ScrollContainer
 @onready var listings_container: VBoxContainer = %ListingsContainer
 @onready var load_more_button: Button = %LoadMoreButton
 @onready var status_label: Label = %StatusLabel
@@ -27,6 +30,8 @@ var _browse_total: int = 0
 var _current_rarity: String = ""
 var _current_sort: String = "newest"
 var _confirm_panel: PanelContainer
+var _touch_start: Vector2
+var _is_dragging: bool = false
 
 func _ready() -> void:
 	browse_tab_button.gui_input.connect(func(event: InputEvent):
@@ -456,6 +461,17 @@ func _show_feedback(text: String, color: Color) -> void:
 		if pixel_font:
 			feedback.add_theme_font_override("font", pixel_font)
 		_confirm_panel.add_child(feedback)
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_touch_start = event.position
+			_is_dragging = false
+	elif event is InputEventScreenDrag:
+		if not _is_dragging and event.position.distance_to(_touch_start) > DRAG_THRESHOLD:
+			_is_dragging = true
+		if _is_dragging:
+			scroll_container.scroll_vertical -= int(event.relative.y)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
