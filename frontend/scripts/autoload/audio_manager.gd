@@ -68,6 +68,40 @@ func _ready() -> void:
 	_reel_player.bus = &"SFX"
 	add_child(_reel_player)
 
+	_load_audio_prefs()
+
+func set_music_enabled(enabled: bool) -> void:
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("Music"), not enabled)
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("Sounds"), not enabled)
+	_save_audio_prefs()
+
+func set_sfx_enabled(enabled: bool) -> void:
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("SFX"), not enabled)
+	_save_audio_prefs()
+
+func is_music_enabled() -> bool:
+	return not AudioServer.is_bus_mute(AudioServer.get_bus_index("Music"))
+
+func is_sfx_enabled() -> bool:
+	return not AudioServer.is_bus_mute(AudioServer.get_bus_index("SFX"))
+
+func _save_audio_prefs() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load("user://settings.cfg")
+	cfg.set_value("audio", "music_enabled", is_music_enabled())
+	cfg.set_value("audio", "sfx_enabled", is_sfx_enabled())
+	cfg.save("user://settings.cfg")
+
+func _load_audio_prefs() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load("user://settings.cfg") != OK:
+		return
+	var music_on: bool = cfg.get_value("audio", "music_enabled", true)
+	var sfx_on: bool = cfg.get_value("audio", "sfx_enabled", true)
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("Music"), not music_on)
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("Sounds"), not music_on)
+	AudioServer.set_bus_mute(AudioServer.get_bus_index("SFX"), not sfx_on)
+
 func play_music() -> void:
 	if _music_player.playing:
 		return

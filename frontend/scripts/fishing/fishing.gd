@@ -40,6 +40,7 @@ var status_tween: Tween = null
 @onready var profile_button: Label = %ProfileButton
 
 func _ready() -> void:
+	wait_label.text = tr("Waiting for a bite...")
 	inventory_button.pressed.connect(_on_inventory_pressed)
 	market_button.pressed.connect(_on_market_pressed)
 	profile_button.gui_input.connect(func(event: InputEvent):
@@ -97,7 +98,7 @@ func _process(delta: float) -> void:
 			if not status_label.visible:
 				idle_timer += delta
 				if idle_timer >= IDLE_HINT_DELAY:
-					status_label.text = "Tap anywhere to cast!"
+					status_label.text = tr("Tap anywhere to cast!")
 					status_label.modulate = Color(1, 1, 1, 0)
 					status_label.visible = true
 					if status_tween:
@@ -116,7 +117,7 @@ func _show_idle() -> void:
 	fishing_rod.play("idle")
 	idle_timer = 0.0
 	if not has_cast_before:
-		status_label.text = "Tap anywhere to cast!"
+		status_label.text = tr("Tap anywhere to cast!")
 		status_label.modulate = Color(1, 1, 1, 0)
 		status_label.visible = true
 		if status_tween:
@@ -134,7 +135,7 @@ func _start_casting() -> void:
 	cast_direction = 1.0
 	if status_tween:
 		status_tween.kill()
-	status_label.text = "Cast Power"
+	status_label.text = tr("Cast Power")
 	status_label.modulate = Color.WHITE
 	status_label.visible = true
 
@@ -157,7 +158,7 @@ func _start_waiting() -> void:
 	current_phase = Phase.WAITING
 	cast_bar.visible = false
 	wait_panel.visible = false
-	status_label.text = "Waiting..."
+	status_label.text = tr("Waiting...")
 	status_label.modulate = Color.WHITE
 	status_label.visible = true
 
@@ -183,6 +184,7 @@ func _start_bite() -> void:
 	status_label.visible = false
 	AudioManager.play_sfx_bite()
 
+	bite_label.text = tr("BITE!")
 	bite_label.visible = true
 	bite_label.scale = Vector2.ONE
 	bite_label.modulate = Color.WHITE
@@ -240,7 +242,7 @@ func _on_fish_escaped() -> void:
 func _show_got_away() -> void:
 	if status_tween:
 		status_tween.kill()
-	status_label.text = "It got away!"
+	status_label.text = tr("It got away!")
 	status_label.modulate = Color.WHITE
 	status_label.visible = true
 	await get_tree().create_timer(2.0).timeout

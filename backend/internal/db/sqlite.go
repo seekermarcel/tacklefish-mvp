@@ -53,7 +53,6 @@ func RunMigrationsFS(database *sql.DB, migrations fs.FS) error {
 		return fmt.Errorf("read migrations: %w", err)
 	}
 
-	// Sort by filename to ensure order.
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].Name() < entries[j].Name()
 	})

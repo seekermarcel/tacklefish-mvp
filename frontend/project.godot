@@ -20,6 +20,7 @@ config/icon="res://app_icon.png"
 
 [autoload]
 
+I18n="*res://scripts/autoload/i18n.gd"
 GameState="*res://scripts/autoload/game_state.gd"
 Auth="*res://scripts/autoload/auth.gd"
 Network="*res://scripts/autoload/network.gd"
@@ -32,7 +33,6 @@ window/size/viewport_width=720
 window/size/viewport_height=1600
 window/stretch/mode="canvas_items"
 window/stretch/aspect="keep_width"
-window/stretch/scale_mode="fractional"
 window/handheld/orientation=1
 
 [input]

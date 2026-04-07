@@ -64,6 +64,9 @@ var _scroll_thumb: TextureRect = null
 @onready var closing_anim: AnimatedSprite2D = %ClosingAnim
 
 func _ready() -> void:
+	load_more_button.text = tr("Load More")
+	search_input.placeholder_text = tr("Search species...")
+
 	back_button.pressed.connect(_on_back)
 	search_button.pressed.connect(_toggle_search)
 	load_more_button.pressed.connect(_load_more)
@@ -244,12 +247,12 @@ func _toggle_search() -> void:
 		search_input.grab_focus()
 
 func _setup_filters() -> void:
-	var all_button := _create_filter_button("All", "")
+	var all_button := _create_filter_button(tr("All"), "")
 	all_button.button_pressed = true
 	filter_container.add_child(all_button)
 
 	for rarity in ["common", "uncommon", "rare", "epic", "legendary"]:
-		var button := _create_filter_button(rarity.capitalize(), rarity)
+		var button := _create_filter_button(tr(rarity), rarity)
 		filter_container.add_child(button)
 
 func _create_filter_button(label_text: String, rarity: String) -> Button:
@@ -289,7 +292,8 @@ func _apply_filters() -> void:
 
 		if active_rarity_filter != "" and rarity != active_rarity_filter:
 			continue
-		if search_query != "" and species.to_lower().find(search_query) == -1:
+		if search_query != "" and species.to_lower().find(search_query) == -1 \
+				and tr(species).to_lower().find(search_query) == -1:
 			continue
 
 		filtered_fish.append(fish_data)
@@ -297,13 +301,13 @@ func _apply_filters() -> void:
 	_rebuild_grid()
 
 func _load_all_fish() -> void:
-	status_label.text = "Loading..."
+	status_label.text = tr("Loading...")
 	all_fish.clear()
 	current_offset = 0
 
 	var result := await Network.get_inventory(PAGE_SIZE, 0)
 	if result.status != 200:
-		status_label.text = "Failed to load"
+		status_label.text = tr("Failed to load")
 		return
 
 	var data: Dictionary = result.data
@@ -415,7 +419,7 @@ func _create_fish_card(data: Dictionary) -> Control:
 
 	# 2. Species name (centered on dark bar 1: 0.465-0.541).
 	var name_label := Label.new()
-	name_label.text = species
+	name_label.text = tr(species)
 	name_label.add_theme_color_override("font_color", rarity_color)
 	name_label.add_theme_font_override("font", PIXEL_FONT)
 	name_label.add_theme_font_size_override("font_size", 12)
@@ -428,7 +432,7 @@ func _create_fish_card(data: Dictionary) -> Control:
 
 	# 3. Color variant (centered on dark bar 2: 0.595-0.641).
 	var color_label := Label.new()
-	color_label.text = "Color: %s" % color_variant.capitalize()
+	color_label.text = tr("Color: %s") % tr(color_variant)
 	color_label.add_theme_color_override("font_color", Color(0.85, 0.78, 0.65))
 	color_label.add_theme_font_override("font", PIXEL_FONT)
 	color_label.add_theme_font_size_override("font_size", 8)
@@ -440,7 +444,7 @@ func _create_fish_card(data: Dictionary) -> Control:
 
 	# 4. Size variant (centered on dark bar 3: 0.681-0.726).
 	var size_label := Label.new()
-	size_label.text = "Size: %s" % size_variant.capitalize()
+	size_label.text = tr("Size: %s") % tr(size_variant)
 	size_label.add_theme_color_override("font_color", Color(0.85, 0.78, 0.65))
 	size_label.add_theme_font_override("font", PIXEL_FONT)
 	size_label.add_theme_font_size_override("font_size", 8)

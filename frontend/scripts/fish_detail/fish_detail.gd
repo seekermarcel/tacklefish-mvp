@@ -18,6 +18,9 @@ var _fish_data: Dictionary = {}
 var _confirm_panel: PanelContainer
 
 func _ready() -> void:
+	back_to_inventory_button.text = tr("Back to Collection")
+	back_to_pond_button.text = tr("Back to Pond")
+
 	back_to_inventory_button.gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			_on_back_to_inventory()
@@ -44,20 +47,20 @@ func _ready() -> void:
 		_fish_data = fish_data
 		_display_fish(fish_data)
 	else:
-		species_label.text = "No fish data"
+		species_label.text = tr("No fish data")
 
 func _display_fish(data: Dictionary) -> void:
 	var rarity: String = data.get("rarity", "common")
 
-	species_label.text = data.get("species", "Unknown")
+	species_label.text = tr(data.get("species", "Unknown"))
 
 	edition_label.text = "%d / %d" % [
 		data.get("edition_number", 0),
 		data.get("edition_size", 0),
 	]
 
-	size_label.text = "Size: %s" % data.get("size_variant", "normal").capitalize()
-	color_label.text = "Color: %s" % data.get("color_variant", "normal").capitalize()
+	size_label.text = tr("Size: %s") % tr(data.get("size_variant", "normal"))
+	color_label.text = tr("Color: %s") % tr(data.get("color_variant", "normal"))
 
 	var rarity_path := "res://resources/sprites/ui/rarity_%s.png" % rarity
 	if ResourceLoader.exists(rarity_path):
