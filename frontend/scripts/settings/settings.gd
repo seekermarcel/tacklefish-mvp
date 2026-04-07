@@ -124,7 +124,6 @@ func _build_ui() -> void:
 	_id_label.add_theme_font_size_override("font_size", 11)
 	_id_label.add_theme_color_override("font_color", Color(0.92, 0.88, 0.78))
 	_id_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_id_label.autowrap_mode = TextServer.AUTOWRAP_ANYWHERE
 	vbox.add_child(_id_label)
 
 	vbox.add_child(_divider())
