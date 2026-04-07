@@ -146,7 +146,73 @@ Get a new JWT using the stored device ID. Use when a request returns 401.
 **Errors:**
 - `401` -- Device ID not found (never registered)
 
-### 4.2 Fish Endpoints (Protected -- token required)
+### 4.2 Backup Code Endpoints
+
+#### `POST /auth/transfer-code` (Protected)
+
+Generate a new backup code for the authenticated player. Replaces any previously generated code.
+
+**Response (200):**
+```json
+{
+  "transfer_code": "ABCD-EFGH-JKLM"
+}
+```
+
+**Notes:**
+- Code is 12 alphanumeric characters (displayed as `XXXX-XXXX-XXXX`)
+- Alphabet excludes `0`, `O`, `1`, `I` to avoid visual confusion
+- Generating a new code invalidates the previous one
+
+#### `GET /auth/transfer-code` (Protected)
+
+Retrieve the player's existing backup code, or `null` if none exists.
+
+**Response (200):**
+```json
+{
+  "transfer_code": "ABCD-EFGH-JKLM"
+}
+```
+
+Or if no code has been generated:
+```json
+{
+  "transfer_code": null
+}
+```
+
+#### `POST /auth/transfer` (Public -- no token needed)
+
+Claim an account on a new device using a backup code. This transfers the account (including all fish) to the new device.
+
+**Request:**
+```json
+{
+  "device_id": "550e8400-e29b-41d4-a716-446655440000",
+  "transfer_code": "ABCD-EFGH-JKLM"
+}
+```
+
+**Response (200):**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "player_id": 1
+}
+```
+
+**Errors:**
+- `400` -- Missing `device_id` or invalid code format (not 12 characters after stripping dashes)
+- `404` -- Code does not match any account
+
+**Notes:**
+- Dashes are stripped and input is uppercased automatically, so `abcd-efgh-jklm` works
+- The code is reusable -- the same code can restore the account on multiple devices
+- If the device was already auto-registered as a new player, that empty player is deleted and **any fish it owned are released back into the edition pool** (their edition numbers become available for catching again)
+- After a successful claim, the client should update `Auth.token` and `GameState.player_id` with the returned values
+
+### 4.3 Fish Endpoints (Protected -- token required)
 
 #### `POST /fish/catch`
 
@@ -309,8 +375,10 @@ On 401 Response:
   4. Retry the failed request
 
 Lost Device ID (app uninstalled):
-  - Account is unrecoverable (future feature: account linking)
-  - Generate new UUID, register as a new player
+  - If the player has a backup code: POST /auth/transfer { device_id, transfer_code }
+  - This transfers the old account to the new device (all fish preserved)
+  - The auto-registered empty player is deleted and its fish released to the pool
+  - If no backup code exists: account is unrecoverable, starts as a new player
 ```
 
 ---
@@ -450,6 +518,9 @@ The `network.gd` autoload should wrap all HTTP calls. Suggested interface:
 # All methods return via signals or await
 network.register(device_id: String) -> { token, player_id }
 network.refresh(device_id: String) -> { token, player_id }
+network.generate_transfer_code() -> { transfer_code }
+network.get_transfer_code() -> { transfer_code }
+network.claim_transfer_code(device_id: String, code: String) -> { token, player_id }
 network.catch_fish(timing_score: float) -> CatchResult
 network.get_pool() -> Array[PoolEntry]
 network.get_inventory(limit: int, offset: int) -> InventoryResult
@@ -495,3 +566,4 @@ docker compose up
 6. **The fish `id` is the database row ID**, not the edition number. Use `id` for API calls, display `edition_number` / `edition_size` to the player.
 7. **`caught_at` is UTC.** Convert to local time for display if needed.
 8. **Catch endpoint is rate limited** to 1 request per 3 seconds per player. Returns `429` with `Retry-After: 3` header if called too fast. The natural fishing loop (cast -> wait -> minigame) takes longer than 3 seconds, so this won't affect normal gameplay.
+9. **Backup code restore releases fish.** When a player claims a backup code on a device that was already auto-registered, the auto-registered player is deleted and any fish it owned are returned to the edition pool. This ensures no editions are permanently lost.

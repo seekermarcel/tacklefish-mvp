@@ -9,6 +9,7 @@ import (
 	"github.com/tacklefish/backend/internal/auth"
 	"github.com/tacklefish/backend/internal/db"
 	"github.com/tacklefish/backend/internal/fish"
+	"github.com/tacklefish/backend/internal/market"
 	"github.com/tacklefish/backend/internal/player"
 	"github.com/tacklefish/backend/migrations"
 )
@@ -31,12 +32,14 @@ func main() {
 	authHandler := &auth.Handler{DB: database, Secret: jwtSecret}
 	fishHandler := &fish.Handler{DB: database}
 	playerHandler := &player.Handler{DB: database}
+	marketHandler := &market.Handler{DB: database}
 
 	mux := http.NewServeMux()
 
 	// Public routes (no auth required).
 	mux.HandleFunc("POST /auth/register", authHandler.Register)
 	mux.HandleFunc("POST /auth/refresh", authHandler.Refresh)
+	mux.HandleFunc("POST /auth/transfer", authHandler.ClaimTransferCode)
 
 	// Health check.
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +56,17 @@ func main() {
 	protected.HandleFunc("GET /fish/pool", fishHandler.Pool)
 	protected.HandleFunc("GET /player/inventory", playerHandler.Inventory)
 	protected.HandleFunc("GET /player/inventory/{id}", playerHandler.FishDetail)
+	protected.HandleFunc("POST /player/inventory/{id}/release", playerHandler.Release)
+	protected.HandleFunc("POST /player/inventory/{id}/sell", playerHandler.Sell)
+	protected.HandleFunc("GET /player/profile", playerHandler.Profile)
+	protected.HandleFunc("POST /market/listings", marketHandler.CreateListing)
+	protected.HandleFunc("GET /market/listings/mine", marketHandler.MyListings)
+	protected.HandleFunc("GET /market/listings", marketHandler.BrowseListings)
+	protected.HandleFunc("POST /market/listings/{id}/buy", marketHandler.BuyListing)
+	protected.HandleFunc("PATCH /market/listings/{id}/price", marketHandler.EditPrice)
+	protected.HandleFunc("POST /market/listings/{id}/cancel", marketHandler.CancelListing)
+	protected.HandleFunc("POST /auth/transfer-code", authHandler.GenerateTransferCode)
+	protected.HandleFunc("GET /auth/transfer-code", authHandler.GetTransferCode)
 
 	mux.Handle("/", auth.Middleware(jwtSecret)(protected))
 

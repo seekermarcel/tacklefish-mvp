@@ -12,9 +12,14 @@ import (
 
 const schema = `
 	CREATE TABLE players (
-		id         INTEGER PRIMARY KEY AUTOINCREMENT,
-		device_id  TEXT    UNIQUE NOT NULL,
-		created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		id              INTEGER PRIMARY KEY AUTOINCREMENT,
+		device_id       TEXT    UNIQUE NOT NULL,
+		transfer_code   TEXT    UNIQUE,
+		created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+		xp              INTEGER NOT NULL DEFAULT 0,
+		total_caught    INTEGER NOT NULL DEFAULT 0,
+		total_released  INTEGER NOT NULL DEFAULT 0,
+		shells          INTEGER NOT NULL DEFAULT 0
 	);
 	CREATE TABLE fish_species (
 		id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,7 +36,19 @@ const schema = `
 		size_variant   TEXT    NOT NULL,
 		color_variant  TEXT    NOT NULL,
 		caught_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+		sold_at        TEXT,
+		listing_id     INTEGER REFERENCES market_listings(id),
 		UNIQUE(species_id, edition_number)
+	);
+	CREATE TABLE market_listings (
+		id           INTEGER PRIMARY KEY AUTOINCREMENT,
+		fish_id      INTEGER NOT NULL REFERENCES fish_instances(id),
+		seller_id    INTEGER NOT NULL REFERENCES players(id),
+		price        INTEGER NOT NULL CHECK (price >= 1 AND price <= 99999),
+		created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+		sold_at      TEXT,
+		buyer_id     INTEGER REFERENCES players(id),
+		cancelled_at TEXT
 	);
 `
 
@@ -89,6 +106,45 @@ func seedSpecies(t *testing.T, db *sql.DB, name string, rarity fish.Rarity, edit
 	return id
 }
 
+func catchFishForPlayer(t *testing.T, db *sql.DB, speciesID int64, editionNum int, playerID int64) int64 {
+	t.Helper()
+	result, err := db.Exec(
+		`INSERT INTO fish_instances (species_id, owner_id, edition_number, size_variant, color_variant) VALUES (?, ?, ?, 'normal', 'normal')`,
+		speciesID, playerID, editionNum,
+	)
+	if err != nil {
+		t.Fatal("catch fish:", err)
+	}
+	id, _ := result.LastInsertId()
+	return id
+}
+
+func seedPlayer(t *testing.T, db *sql.DB, deviceID string, shells int) int64 {
+	t.Helper()
+	result, err := db.Exec(`INSERT INTO players (device_id, shells) VALUES (?, ?)`, deviceID, shells)
+	if err != nil {
+		t.Fatal("seed player:", err)
+	}
+	id, _ := result.LastInsertId()
+	return id
+}
+
+func createListing(t *testing.T, db *sql.DB, fishID int64, sellerID int64, price int) int64 {
+	t.Helper()
+	result, err := db.Exec(
+		`INSERT INTO market_listings (fish_id, seller_id, price) VALUES (?, ?, ?)`,
+		fishID, sellerID, price,
+	)
+	if err != nil {
+		t.Fatal("create listing:", err)
+	}
+	listingID, _ := result.LastInsertId()
+	if _, err := db.Exec(`UPDATE fish_instances SET listing_id = ? WHERE id = ?`, listingID, fishID); err != nil {
+		t.Fatal("set listing_id:", err)
+	}
+	return listingID
+}
+
 func catchFish(t *testing.T, db *sql.DB, speciesID int64, editionNum int) {
 	t.Helper()
 	_, err := db.Exec(
@@ -100,7 +156,7 @@ func catchFish(t *testing.T, db *sql.DB, speciesID int64, editionNum int) {
 	}
 }
 
-// seedAllMVPSpecies inserts the 10 MVP fish species.
+// seedAllMVPSpecies inserts the MVP fish species.
 func seedAllMVPSpecies(t *testing.T, db *sql.DB) {
 	t.Helper()
 	_, err := db.Exec(`
@@ -115,8 +171,9 @@ func seedAllMVPSpecies(t *testing.T, db *sql.DB) {
 			('Night Eel',            'rare',       100, 1),
 			('Obsidian Pufferfish',  'epic',        30, 1),
 			('Golden Primeval Perch', 'legendary',  10, 1),
-			('Buntbarsch',           'rare',       150, 1),
-			('Unifish',              'legendary',   10, 1)
+			('Cichlid',              'rare',       150, 1),
+			('Unifish',              'legendary',   10, 1),
+			('Old Shoe',             'legendary',    2, 1)
 	`)
 	if err != nil {
 		t.Fatal("seed MVP species:", err)

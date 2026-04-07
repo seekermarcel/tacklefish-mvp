@@ -49,6 +49,64 @@ func get_inventory(limit: int = 20, offset: int = 0) -> Dictionary:
 func get_fish_detail(fish_id: int) -> Dictionary:
 	return await _do_request("/player/inventory/%d" % fish_id, HTTPClient.METHOD_GET)
 
+## Generate a new backup code (replaces any existing code).
+func generate_transfer_code() -> Dictionary:
+	return await _do_request("/auth/transfer-code", HTTPClient.METHOD_POST)
+
+## Get the existing backup code (or null if none exists).
+func get_transfer_code() -> Dictionary:
+	return await _do_request("/auth/transfer-code", HTTPClient.METHOD_GET)
+
+## Release a fish back to the wild. Returns XP earned.
+func release_fish(fish_id: int) -> Dictionary:
+	return await _do_request("/player/inventory/%d/release" % fish_id, HTTPClient.METHOD_POST)
+
+## Quick-sell a fish for shells. Edition is permanently consumed.
+func sell_fish(fish_id: int) -> Dictionary:
+	return await _do_request("/player/inventory/%d/sell" % fish_id, HTTPClient.METHOD_POST)
+
+## Get the player's profile (XP, level, stats).
+func get_profile() -> Dictionary:
+	return await _do_request("/player/profile", HTTPClient.METHOD_GET)
+
+## List a fish on the marketplace at a given price.
+func create_listing(fish_id: int, price: int) -> Dictionary:
+	var body := JSON.stringify({"fish_id": fish_id, "price": price})
+	return await _do_request("/market/listings", HTTPClient.METHOD_POST, body)
+
+## Browse active marketplace listings from other players.
+func browse_listings(limit: int = 20, offset: int = 0, rarity: String = "", sort: String = "newest") -> Dictionary:
+	var url := "/market/listings?limit=%d&offset=%d&sort=%s" % [limit, offset, sort]
+	if rarity != "":
+		url += "&rarity=%s" % rarity
+	return await _do_request(url, HTTPClient.METHOD_GET)
+
+## Get your own active marketplace listings.
+func my_listings() -> Dictionary:
+	return await _do_request("/market/listings/mine", HTTPClient.METHOD_GET)
+
+## Buy a listing from the marketplace.
+func buy_listing(listing_id: int) -> Dictionary:
+	return await _do_request("/market/listings/%d/buy" % listing_id, HTTPClient.METHOD_POST)
+
+## Change the price of your own listing.
+func edit_listing_price(listing_id: int, price: int) -> Dictionary:
+	var body := JSON.stringify({"price": price})
+	return await _do_request("/market/listings/%d/price" % listing_id, HTTPClient.METHOD_PATCH, body)
+
+## Cancel your own listing (fish returns to inventory).
+func cancel_listing(listing_id: int) -> Dictionary:
+	return await _do_request("/market/listings/%d/cancel" % listing_id, HTTPClient.METHOD_POST)
+
+## Claim an account using a backup code from a previous install.
+func claim_transfer_code(device_id: String, code: String) -> Dictionary:
+	var body := JSON.stringify({"device_id": device_id, "transfer_code": code})
+	var result := await _do_request("/auth/transfer", HTTPClient.METHOD_POST, body, false)
+	if result.status == 200:
+		Auth.token = result.data.get("token", "")
+		GameState.player_id = result.data.get("player_id", 0)
+	return result
+
 ## Internal: perform an HTTP request with optional auth and auto-retry on 401.
 func _do_request(path: String, method: int, body: String = "", use_auth: bool = true) -> Dictionary:
 	var headers := PackedStringArray(["Content-Type: application/json"])

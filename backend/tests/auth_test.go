@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/tacklefish/backend/internal/auth"
+	"github.com/tacklefish/backend/internal/fish"
 )
 
 const testSecret = "test-secret-key"
@@ -252,5 +253,352 @@ func TestRateLimitMiddleware(t *testing.T) {
 	handler.ServeHTTP(w3, req3)
 	if w3.Code != http.StatusOK {
 		t.Errorf("after cooldown: status = %d, want 200", w3.Code)
+	}
+}
+
+func TestGenerateTransferCodeNoClaims(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	// Request without claims (no auth).
+	req := httptest.NewRequest("POST", "/auth/transfer-code", nil)
+	w := httptest.NewRecorder()
+	handler.GenerateTransferCode(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("status = %d, want 401", w.Code)
+	}
+}
+
+func TestGetTransferCodeNoClaims(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	req := httptest.NewRequest("GET", "/auth/transfer-code", nil)
+	w := httptest.NewRecorder()
+	handler.GetTransferCode(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("status = %d, want 401", w.Code)
+	}
+}
+
+func TestGenerateTransferCode(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	req := requestWithClaims("POST", "/auth/transfer-code", "", 1)
+	w := httptest.NewRecorder()
+	handler.GenerateTransferCode(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body = %s", w.Code, w.Body.String())
+	}
+
+	var resp struct {
+		TransferCode string `json:"transfer_code"`
+	}
+	json.NewDecoder(w.Body).Decode(&resp)
+
+	// Code should be formatted as XXXX-XXXX-XXXX (14 chars with dashes).
+	if len(resp.TransferCode) != 14 {
+		t.Errorf("transfer_code length = %d, want 14 (XXXX-XXXX-XXXX)", len(resp.TransferCode))
+	}
+	if resp.TransferCode[4] != '-' || resp.TransferCode[9] != '-' {
+		t.Errorf("transfer_code format wrong: %q", resp.TransferCode)
+	}
+}
+
+func TestGetTransferCodeNone(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	req := requestWithClaims("GET", "/auth/transfer-code", "", 1)
+	w := httptest.NewRecorder()
+	handler.GetTransferCode(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+
+	var resp map[string]any
+	json.NewDecoder(w.Body).Decode(&resp)
+	if resp["transfer_code"] != nil {
+		t.Errorf("expected null transfer_code, got %v", resp["transfer_code"])
+	}
+}
+
+func TestGetTransferCodeExisting(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	// Generate a code first.
+	genReq := requestWithClaims("POST", "/auth/transfer-code", "", 1)
+	genW := httptest.NewRecorder()
+	handler.GenerateTransferCode(genW, genReq)
+
+	var genResp struct {
+		TransferCode string `json:"transfer_code"`
+	}
+	json.NewDecoder(genW.Body).Decode(&genResp)
+
+	// Get should return the same code.
+	getReq := requestWithClaims("GET", "/auth/transfer-code", "", 1)
+	getW := httptest.NewRecorder()
+	handler.GetTransferCode(getW, getReq)
+
+	var getResp struct {
+		TransferCode string `json:"transfer_code"`
+	}
+	json.NewDecoder(getW.Body).Decode(&getResp)
+
+	if getResp.TransferCode != genResp.TransferCode {
+		t.Errorf("get code = %q, want %q", getResp.TransferCode, genResp.TransferCode)
+	}
+}
+
+func TestClaimTransferCode(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	// Generate a code for player 1.
+	genReq := requestWithClaims("POST", "/auth/transfer-code", "", 1)
+	genW := httptest.NewRecorder()
+	handler.GenerateTransferCode(genW, genReq)
+
+	var genResp struct {
+		TransferCode string `json:"transfer_code"`
+	}
+	json.NewDecoder(genW.Body).Decode(&genResp)
+
+	// Claim with a new device.
+	claimBody := `{"device_id":"new-device-123","transfer_code":"` + genResp.TransferCode + `"}`
+	claimReq := httptest.NewRequest("POST", "/auth/transfer", bytes.NewBufferString(claimBody))
+	claimW := httptest.NewRecorder()
+	handler.ClaimTransferCode(claimW, claimReq)
+
+	if claimW.Code != http.StatusOK {
+		t.Fatalf("claim status = %d, want 200; body = %s", claimW.Code, claimW.Body.String())
+	}
+
+	var claimResp struct {
+		Token    string `json:"token"`
+		PlayerID int64  `json:"player_id"`
+	}
+	json.NewDecoder(claimW.Body).Decode(&claimResp)
+
+	if claimResp.PlayerID != 1 {
+		t.Errorf("claimed player_id = %d, want 1", claimResp.PlayerID)
+	}
+	if claimResp.Token == "" {
+		t.Error("expected non-empty token")
+	}
+
+	// Old device should no longer work for refresh.
+	refreshReq := httptest.NewRequest("POST", "/auth/refresh", bytes.NewBufferString(`{"device_id":"test-device"}`))
+	refreshW := httptest.NewRecorder()
+	handler.Refresh(refreshW, refreshReq)
+	if refreshW.Code != http.StatusUnauthorized {
+		t.Errorf("old device refresh: status = %d, want 401", refreshW.Code)
+	}
+}
+
+func TestClaimTransferCodeInvalid(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	body := `{"device_id":"some-device","transfer_code":"XXXX-XXXX-XXXX"}`
+	req := httptest.NewRequest("POST", "/auth/transfer", bytes.NewBufferString(body))
+	w := httptest.NewRecorder()
+	handler.ClaimTransferCode(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("status = %d, want 404", w.Code)
+	}
+}
+
+func TestClaimTransferCodeBadFormat(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	body := `{"device_id":"some-device","transfer_code":"SHORT"}`
+	req := httptest.NewRequest("POST", "/auth/transfer", bytes.NewBufferString(body))
+	w := httptest.NewRecorder()
+	handler.ClaimTransferCode(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want 400", w.Code)
+	}
+}
+
+func TestClaimTransferCodeMissingDeviceID(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	body := `{"device_id":"","transfer_code":"XXXX-XXXX-XXXX"}`
+	req := httptest.NewRequest("POST", "/auth/transfer", bytes.NewBufferString(body))
+	w := httptest.NewRecorder()
+	handler.ClaimTransferCode(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want 400", w.Code)
+	}
+}
+
+func TestClaimTransferCodeInvalidJSON(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	req := httptest.NewRequest("POST", "/auth/transfer", bytes.NewBufferString(`not json`))
+	w := httptest.NewRecorder()
+	handler.ClaimTransferCode(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want 400", w.Code)
+	}
+}
+
+func TestClaimTransferCodeReusable(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	// Generate a code for player 1.
+	genReq := requestWithClaims("POST", "/auth/transfer-code", "", 1)
+	genW := httptest.NewRecorder()
+	handler.GenerateTransferCode(genW, genReq)
+
+	var genResp struct {
+		TransferCode string `json:"transfer_code"`
+	}
+	json.NewDecoder(genW.Body).Decode(&genResp)
+
+	// Claim once.
+	claimBody := `{"device_id":"device-a","transfer_code":"` + genResp.TransferCode + `"}`
+	claimReq := httptest.NewRequest("POST", "/auth/transfer", bytes.NewBufferString(claimBody))
+	claimW := httptest.NewRecorder()
+	handler.ClaimTransferCode(claimW, claimReq)
+	if claimW.Code != http.StatusOK {
+		t.Fatalf("first claim: status = %d, want 200", claimW.Code)
+	}
+
+	// Claim again with different device — should still work (reusable).
+	claimBody2 := `{"device_id":"device-b","transfer_code":"` + genResp.TransferCode + `"}`
+	claimReq2 := httptest.NewRequest("POST", "/auth/transfer", bytes.NewBufferString(claimBody2))
+	claimW2 := httptest.NewRecorder()
+	handler.ClaimTransferCode(claimW2, claimReq2)
+	if claimW2.Code != http.StatusOK {
+		t.Errorf("reuse claim: status = %d, want 200", claimW2.Code)
+	}
+}
+
+func TestGenerateTransferCodeRevokesOld(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	// Generate first code.
+	req1 := requestWithClaims("POST", "/auth/transfer-code", "", 1)
+	w1 := httptest.NewRecorder()
+	handler.GenerateTransferCode(w1, req1)
+
+	var resp1 struct {
+		TransferCode string `json:"transfer_code"`
+	}
+	json.NewDecoder(w1.Body).Decode(&resp1)
+
+	// Generate second code (should replace first).
+	req2 := requestWithClaims("POST", "/auth/transfer-code", "", 1)
+	w2 := httptest.NewRecorder()
+	handler.GenerateTransferCode(w2, req2)
+
+	var resp2 struct {
+		TransferCode string `json:"transfer_code"`
+	}
+	json.NewDecoder(w2.Body).Decode(&resp2)
+
+	if resp1.TransferCode == resp2.TransferCode {
+		t.Error("second code should be different from first")
+	}
+
+	// Old code should no longer work.
+	claimBody := `{"device_id":"new-device","transfer_code":"` + resp1.TransferCode + `"}`
+	claimReq := httptest.NewRequest("POST", "/auth/transfer", bytes.NewBufferString(claimBody))
+	claimW := httptest.NewRecorder()
+	handler.ClaimTransferCode(claimW, claimReq)
+
+	if claimW.Code != http.StatusNotFound {
+		t.Errorf("old code claim: status = %d, want 404", claimW.Code)
+	}
+}
+
+func TestClaimTransferCodeDeviceAlreadyRegistered(t *testing.T) {
+	db := setupMemoryDB(t)
+	handler := &auth.Handler{DB: db, Secret: testSecret}
+
+	// Player 1 (the "old" account) generates a backup code.
+	genReq := requestWithClaims("POST", "/auth/transfer-code", "", 1)
+	genW := httptest.NewRecorder()
+	handler.GenerateTransferCode(genW, genReq)
+
+	var genResp struct {
+		TransferCode string `json:"transfer_code"`
+	}
+	json.NewDecoder(genW.Body).Decode(&genResp)
+
+	// Simulate a fresh install: register a new device, creating a new player.
+	newDeviceID := "fresh-install-device"
+	regBody := `{"device_id":"` + newDeviceID + `"}`
+	regReq := httptest.NewRequest("POST", "/auth/register", bytes.NewBufferString(regBody))
+	regW := httptest.NewRecorder()
+	handler.Register(regW, regReq)
+	if regW.Code != http.StatusOK {
+		t.Fatalf("register: status = %d, want 200", regW.Code)
+	}
+
+	// Give the auto-registered player a fish so we can verify it's released.
+	var autoPlayerID int64
+	db.QueryRow(`SELECT id FROM players WHERE device_id = ?`, newDeviceID).Scan(&autoPlayerID)
+	speciesID := seedSpecies(t, db, "ReleaseFish", fish.Common, 100)
+	_, err := db.Exec(
+		`INSERT INTO fish_instances (species_id, owner_id, edition_number, size_variant, color_variant) VALUES (?, ?, 1, 'normal', 'normal')`,
+		speciesID, autoPlayerID,
+	)
+	if err != nil {
+		t.Fatal("seed fish for auto-player:", err)
+	}
+
+	// Now claim the backup code with the same device_id that was just registered.
+	// This used to fail with a UNIQUE constraint violation.
+	claimBody := `{"device_id":"` + newDeviceID + `","transfer_code":"` + genResp.TransferCode + `"}`
+	claimReq := httptest.NewRequest("POST", "/auth/transfer", bytes.NewBufferString(claimBody))
+	claimW := httptest.NewRecorder()
+	handler.ClaimTransferCode(claimW, claimReq)
+
+	if claimW.Code != http.StatusOK {
+		t.Fatalf("claim with registered device: status = %d, body = %s, want 200", claimW.Code, claimW.Body.String())
+	}
+
+	var claimResp struct {
+		Token    string `json:"token"`
+		PlayerID int64  `json:"player_id"`
+	}
+	json.NewDecoder(claimW.Body).Decode(&claimResp)
+
+	// Should return the OLD player's ID (player 1), not the freshly registered one.
+	if claimResp.PlayerID != 1 {
+		t.Errorf("player_id = %d, want 1 (the restored account)", claimResp.PlayerID)
+	}
+
+	// Verify fish owned by the deleted player are gone (released back to pool).
+	var fishCount int
+	db.QueryRow(`SELECT COUNT(*) FROM fish_instances WHERE owner_id = ?`, autoPlayerID).Scan(&fishCount)
+	if fishCount != 0 {
+		t.Errorf("expected 0 fish for deleted player, got %d", fishCount)
+	}
+
+	// Verify the edition is available again (pool fully intact).
+	var remaining int
+	db.QueryRow(`SELECT ? - COUNT(*) FROM fish_instances WHERE species_id = ?`, 100, speciesID).Scan(&remaining)
+	if remaining != 100 {
+		t.Errorf("expected 100 remaining editions (fish released), got %d", remaining)
 	}
 }

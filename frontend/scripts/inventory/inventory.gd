@@ -17,19 +17,6 @@ const RARITY_BG := {
 	"legendary": Color(0.40, 0.32, 0.18, 0.85),
 }
 
-const FISH_PLACEHOLDER_COLORS := {
-	"Perch": Color(0.6, 0.75, 0.4),
-	"Carp": Color(0.7, 0.55, 0.3),
-	"Chub": Color(0.65, 0.7, 0.45),
-	"Brook Trout": Color(0.5, 0.7, 0.6),
-	"Moonbass": Color(0.4, 0.4, 0.75),
-	"Catfish": Color(0.5, 0.45, 0.4),
-	"Ice Trout": Color(0.6, 0.85, 0.95),
-	"Night Eel": Color(0.2, 0.2, 0.35),
-	"Obsidian Pufferfish": Color(0.15, 0.15, 0.2),
-	"Golden Primeval Perch": Color(1.0, 0.85, 0.3),
-}
-
 const PIXEL_FONT := preload("res://resources/fonts/pixel.ttf")
 const CARD_TEXTURE := preload("res://resources/sprites/ui/fish_card.png")
 const SCROLL_BAR_TEXTURE := preload("res://resources/sprites/ui/scroll_bar.png")
@@ -414,38 +401,21 @@ func _create_fish_card(data: Dictionary) -> Control:
 	card_wrapper.add_child(sprite_container)
 
 	var sprite_path := "res://resources/sprites/fish/%s.png" % species.to_lower().replace(" ", "_")
-	if ResourceLoader.exists(sprite_path):
-		var texture_rect := TextureRect.new()
-		texture_rect.texture = load(sprite_path)
-		texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		var base_size := 75.0
-		match size_variant:
-			"mini": base_size = 42.0
-			"large": base_size = 100.0
-			"giant": base_size = 120.0
-		texture_rect.custom_minimum_size = Vector2(base_size * 1.6, base_size)
-		texture_rect.modulate = _color_variant_modulate(color_variant)
-		sprite_container.add_child(texture_rect)
-	else:
-		var fish_sprite := ColorRect.new()
-		var fish_color: Color = FISH_PLACEHOLDER_COLORS.get(species, Color(0.5, 0.5, 0.5))
-		match color_variant:
-			"albino": fish_color = fish_color.lightened(0.6)
-			"melanistic": fish_color = fish_color.darkened(0.6)
-			"rainbow": fish_color = Color(0.9, 0.5, 0.8)
-			"neon":
-				fish_color = fish_color.lightened(0.3)
-				fish_color.s = 1.0
-		var base_size := 50.0
-		match size_variant:
-			"mini": base_size = 28.0
-			"large": base_size = 65.0
-			"giant": base_size = 80.0
-		fish_sprite.color = fish_color
-		fish_sprite.custom_minimum_size = Vector2(base_size * 1.6, base_size)
-		sprite_container.add_child(fish_sprite)
+	if not ResourceLoader.exists(sprite_path):
+		sprite_path = "res://resources/sprites/fish/fish_placeholder.png"
+	var texture_rect := TextureRect.new()
+	texture_rect.texture = load(sprite_path)
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var base_size := 75.0
+	match size_variant:
+		"mini": base_size = 42.0
+		"large": base_size = 100.0
+		"giant": base_size = 120.0
+	texture_rect.custom_minimum_size = Vector2(base_size * 1.6, base_size)
+	texture_rect.modulate = _color_variant_modulate(color_variant)
+	sprite_container.add_child(texture_rect)
 
 	# 2. Species name (centered on dark bar 1: 0.465-0.541).
 	var name_label := Label.new()
@@ -531,6 +501,10 @@ static func _color_variant_modulate(color_variant: String) -> Color:
 func _on_card_pressed(data: Dictionary) -> void:
 	GameState.set_meta("selected_fish", data)
 	_play_closing("res://scenes/fish_detail/fish_detail.tscn")
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		_on_back()
 
 func _on_back() -> void:
 	_play_closing("res://scenes/fishing/fishing.tscn")

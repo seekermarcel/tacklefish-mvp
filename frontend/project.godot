@@ -13,6 +13,8 @@ config_version=5
 config/name="Tacklefish"
 config/description="A casual mobile fishing game where every fish is a unique, numbered collectible."
 run/main_scene="res://scenes/main_menu/main_menu.tscn"
+config/auto_accept_quit=false
+config/quit_on_go_back=false
 config/features=PackedStringArray("4.6")
 config/icon="res://app_icon.png"
 

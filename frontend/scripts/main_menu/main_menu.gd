@@ -107,5 +107,13 @@ func _on_start_pressed() -> void:
 	await get_tree().create_timer(0.1).timeout
 	await SceneTransition.iris_open_with_scene("res://scenes/fishing/fishing.tscn", 1.0)
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST or what == NOTIFICATION_WM_CLOSE_REQUEST:
+		get_tree().quit()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		get_tree().quit()
+
 func _on_exit_pressed() -> void:
 	get_tree().quit()

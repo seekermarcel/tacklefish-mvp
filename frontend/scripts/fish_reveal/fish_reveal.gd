@@ -156,22 +156,23 @@ func _display_fish_sprite(data: Dictionary) -> void:
 	var species: String = data.get("species", "Unknown")
 	var sprite_path := "res://resources/sprites/fish/%s.png" % species.to_lower().replace(" ", "_")
 
-	if ResourceLoader.exists(sprite_path):
-		var color_variant: String = data.get("color_variant", "normal")
-		var size_variant: String = data.get("size_variant", "normal")
-		var sprite_size := 160.0
-		match size_variant:
-			"mini": sprite_size = 80.0
-			"large": sprite_size = 240.0
-			"giant": sprite_size = 300.0
-		var texture_rect := TextureRect.new()
-		texture_rect.texture = load(sprite_path)
-		texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		texture_rect.custom_minimum_size = Vector2(sprite_size * 1.6, sprite_size)
-		texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		texture_rect.modulate = _color_variant_modulate(color_variant)
-		fish_sprite_container.add_child(texture_rect)
+	var color_variant: String = data.get("color_variant", "normal")
+	var size_variant: String = data.get("size_variant", "normal")
+	if not ResourceLoader.exists(sprite_path):
+		sprite_path = "res://resources/sprites/fish/fish_placeholder.png"
+	var sprite_size := 160.0
+	match size_variant:
+		"mini": sprite_size = 80.0
+		"large": sprite_size = 240.0
+		"giant": sprite_size = 300.0
+	var texture_rect := TextureRect.new()
+	texture_rect.texture = load(sprite_path)
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	texture_rect.custom_minimum_size = Vector2(sprite_size * 1.6, sprite_size)
+	texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	texture_rect.modulate = _color_variant_modulate(color_variant)
+	fish_sprite_container.add_child(texture_rect)
 
 static func _color_variant_modulate(color_variant: String) -> Color:
 	match color_variant:
@@ -180,6 +181,10 @@ static func _color_variant_modulate(color_variant: String) -> Color:
 		"rainbow": return Color(1.2, 0.7, 1.1)
 		"neon": return Color(0.6, 1.5, 0.8)
 		_: return Color.WHITE
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		await SceneTransition.iris_to("res://scenes/fishing/fishing.tscn")
 
 func _on_cast_again() -> void:
 	await SceneTransition.iris_to("res://scenes/fishing/fishing.tscn")

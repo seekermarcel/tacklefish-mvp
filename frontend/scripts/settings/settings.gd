@@ -18,6 +18,11 @@ var _pool_list: VBoxContainer
 var _pool_status: Label
 var _id_input: LineEdit
 var _id_status: Label
+var _backup_code_label: Label
+var _backup_status: Label
+var _generate_btn: Button
+var _restore_input: LineEdit
+var _restore_btn: Button
 
 func _ready() -> void:
 	_build_ui()
@@ -176,6 +181,64 @@ func _build_ui() -> void:
 	pool_btn.pressed.connect(_on_pool_pressed)
 	vbox.add_child(pool_btn)
 
+	vbox.add_child(_divider())
+
+	# --- Backup Code section ---
+	vbox.add_child(_section_label(tr("Backup Code")))
+
+	_backup_code_label = Label.new()
+	_backup_code_label.text = tr("Loading...")
+	_backup_code_label.add_theme_font_override("font", PIXEL_FONT)
+	_backup_code_label.add_theme_font_size_override("font_size", 28)
+	_backup_code_label.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	_backup_code_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(_backup_code_label)
+
+	_generate_btn = Button.new()
+	_generate_btn.text = tr("Generate New Code")
+	_generate_btn.add_theme_font_override("font", PIXEL_FONT)
+	_generate_btn.add_theme_font_size_override("font_size", 16)
+	_generate_btn.custom_minimum_size = Vector2(0, 48)
+	_generate_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_generate_btn.pressed.connect(_on_generate_code)
+	vbox.add_child(_generate_btn)
+
+	vbox.add_child(_section_label(tr("Restore Account")))
+
+	_restore_input = LineEdit.new()
+	_restore_input.placeholder_text = tr("Enter backup code (XXXX-XXXX-XXXX)")
+	_restore_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_restore_input.max_length = 14
+	_restore_input.add_theme_font_override("font", PIXEL_FONT)
+	_restore_input.add_theme_font_size_override("font_size", 14)
+	_restore_input.custom_minimum_size = Vector2(0, 44)
+	_restore_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_child(_restore_input)
+
+	_restore_btn = Button.new()
+	_restore_btn.text = tr("Restore")
+	_restore_btn.add_theme_font_override("font", PIXEL_FONT)
+	_restore_btn.add_theme_font_size_override("font_size", 16)
+	_restore_btn.custom_minimum_size = Vector2(0, 48)
+	_restore_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_restore_btn.pressed.connect(_on_restore_code)
+	vbox.add_child(_restore_btn)
+
+	_backup_status = Label.new()
+	_backup_status.add_theme_font_override("font", PIXEL_FONT)
+	_backup_status.add_theme_font_size_override("font_size", 13)
+	_backup_status.add_theme_color_override("font_color", Color(0.4, 0.8, 0.4))
+	_backup_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_backup_status.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_backup_status.visible = false
+	vbox.add_child(_backup_status)
+
+	if Auth.has_token():
+		_load_backup_code()
+	else:
+		_backup_code_label.text = tr("No code yet")
+		_generate_btn.visible = false
+
 	# --- Pool overlay (full-screen, hidden) ---
 	_build_pool_overlay()
 
@@ -328,6 +391,52 @@ func _on_language_pressed(locale: String) -> void:
 	I18n.set_language(locale)
 	# Return to main menu so it reloads with the new language.
 	SceneTransition.iris_to("res://scenes/main_menu/main_menu.tscn")
+
+func _load_backup_code() -> void:
+	var result := await Network.get_transfer_code()
+	if result.status == 200:
+		var code = result.data.get("transfer_code")
+		if code == null:
+			_backup_code_label.text = tr("No code yet")
+		else:
+			_backup_code_label.text = str(code)
+	else:
+		_backup_code_label.text = tr("Could not load code")
+
+func _on_generate_code() -> void:
+	_generate_btn.disabled = true
+	_backup_status.text = tr("Generating...")
+	_backup_status.visible = true
+	var result := await Network.generate_transfer_code()
+	_generate_btn.disabled = false
+	if result.status == 200:
+		_backup_code_label.text = result.data.get("transfer_code", "???")
+		_backup_status.text = tr("Save this code! You need it to restore your account.")
+	else:
+		_backup_status.text = tr("Failed to generate code.")
+
+func _on_restore_code() -> void:
+	var code := _restore_input.text.strip_edges()
+	if code.is_empty():
+		_backup_status.text = tr("Please enter a backup code.")
+		_backup_status.visible = true
+		return
+
+	_restore_btn.disabled = true
+	_backup_status.text = tr("Restoring...")
+	_backup_status.visible = true
+	var result := await Network.claim_transfer_code(Auth.device_id, code)
+	_restore_btn.disabled = false
+
+	if result.status == 200:
+		_backup_status.text = tr("Account restored! Player #%d") % GameState.player_id
+		_load_backup_code()
+	elif result.status == 404:
+		_backup_status.text = tr("Invalid code. Please check and try again.")
+	elif result.status == 400:
+		_backup_status.text = tr("Wrong code format. Use XXXX-XXXX-XXXX.")
+	else:
+		_backup_status.text = tr("Restore failed. Check your connection.")
 
 func _on_back() -> void:
 	await SceneTransition.iris_to("res://scenes/main_menu/main_menu.tscn")

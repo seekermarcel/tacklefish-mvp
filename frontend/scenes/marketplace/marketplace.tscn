@@ -1,0 +1,150 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/marketplace/marketplace.gd" id="1"]
+[ext_resource type="FontFile" uid="uid://b1l34cherynj0" path="res://resources/fonts/pixel.ttf" id="2"]
+
+[node name="Marketplace" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.1, 0.14, 0.2, 1)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 50.0
+offset_right = -16.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+alignment = 1
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="VBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.94, 0.87, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.05, 0.04, 1)
+theme_override_constants/outline_size = 8
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 28
+text = "Market"
+
+[node name="ShellsLabel" type="Label" parent="VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1.0, 0.9, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.05, 0.04, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 20
+text = "0 Shells"
+
+[node name="TabBar" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+alignment = 1
+mouse_filter = 2
+theme_override_constants/separation = 40
+
+[node name="BrowseTabButton" type="Label" parent="VBox/TabBar"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 0
+theme_override_colors/font_color = Color(1.0, 0.85, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.05, 0.04, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 22
+text = "Browse"
+
+[node name="MyListingsTabButton" type="Label" parent="VBox/TabBar"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 0
+theme_override_colors/font_color = Color(0.6, 0.58, 0.52, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.05, 0.04, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 22
+text = "My Listings"
+
+[node name="FilterRow" type="HBoxContainer" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="SortButton" type="Button" parent="VBox/FilterRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 14
+text = "Newest"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 0
+
+[node name="ListingsContainer" type="VBoxContainer" parent="VBox/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="LoadMoreButton" type="Button" parent="VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 18
+text = "Load More"
+
+[node name="StatusLabel" type="Label" parent="VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 16
+text = "Loading..."
+horizontal_alignment = 1
+
+[node name="BackButton" type="Label" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 0
+theme_override_colors/font_color = Color(0.96, 0.94, 0.87, 1)
+theme_override_colors/font_outline_color = Color(0.12, 0.1, 0.08, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 20
+text = "Back to Pond"
+horizontal_alignment = 1

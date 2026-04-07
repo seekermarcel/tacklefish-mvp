@@ -37,10 +37,16 @@ var status_tween: Tween = null
 @onready var minigame_overlay = %MinigameOverlay
 @onready var market_button: TextureButton = %MarketButton
 @onready var inventory_button: TextureButton = %InventoryButton
+@onready var profile_button: Label = %ProfileButton
 
 func _ready() -> void:
 	wait_label.text = tr("Waiting for a bite...")
 	inventory_button.pressed.connect(_on_inventory_pressed)
+	market_button.pressed.connect(_on_market_pressed)
+	profile_button.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_on_profile_pressed()
+	)
 	minigame_overlay.fish_caught.connect(_on_fish_caught)
 	minigame_overlay.fish_escaped.connect(_on_fish_escaped)
 	_fit_background()
@@ -59,6 +65,10 @@ func _fit_background() -> void:
 	background.position = offset
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		if current_phase == Phase.IDLE:
+			await SceneTransition.iris_to("res://scenes/main_menu/main_menu.tscn")
+		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_handle_tap()
 
@@ -266,3 +276,9 @@ func _on_catch() -> void:
 
 func _on_inventory_pressed() -> void:
 	await SceneTransition.iris_to("res://scenes/inventory/inventory.tscn")
+
+func _on_market_pressed() -> void:
+	await SceneTransition.iris_to("res://scenes/marketplace/marketplace.tscn")
+
+func _on_profile_pressed() -> void:
+	await SceneTransition.iris_to("res://scenes/profile/profile.tscn")

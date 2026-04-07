@@ -5,6 +5,7 @@ const DEVICE_ID_PATH := "user://device_id"
 
 var device_id: String = ""
 var token: String = ""
+var is_fresh_install: bool = false
 
 func _ready() -> void:
 	_load_or_create_device_id()
@@ -15,6 +16,7 @@ func _load_or_create_device_id() -> void:
 		device_id = file.get_as_text().strip_edges()
 		file.close()
 	if device_id.is_empty():
+		is_fresh_install = true
 		device_id = _generate_uuid_v4()
 		var file := FileAccess.open(DEVICE_ID_PATH, FileAccess.WRITE)
 		file.store_string(device_id)
