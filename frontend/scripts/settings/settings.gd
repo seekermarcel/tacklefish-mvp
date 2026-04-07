@@ -16,8 +16,7 @@ var _sfx_btn: Button
 var _pool_overlay: Control
 var _pool_list: VBoxContainer
 var _pool_status: Label
-var _id_input: LineEdit
-var _id_status: Label
+var _id_label: Label
 var _backup_code_label: Label
 var _backup_status: Label
 var _generate_btn: Button
@@ -118,42 +117,15 @@ func _build_ui() -> void:
 	# --- Player ID section ---
 	vbox.add_child(_section_label(tr("Player ID")))
 
-	# Show current device ID with copy button
-	var id_row := _row()
-	_id_input = LineEdit.new()
-	_id_input.text = Auth.device_id
-	_id_input.editable = true
-	_id_input.add_theme_font_override("font", PIXEL_FONT)
-	_id_input.add_theme_font_size_override("font_size", 11)
-	_id_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_id_input.custom_minimum_size = Vector2(0, 44)
-	id_row.add_child(_id_input)
-
-	var copy_btn := Button.new()
-	copy_btn.text = tr("Copy")
-	copy_btn.add_theme_font_override("font", PIXEL_FONT)
-	copy_btn.add_theme_font_size_override("font_size", 14)
-	copy_btn.custom_minimum_size = Vector2(80, 44)
-	copy_btn.pressed.connect(_on_copy_id.bind(copy_btn))
-	id_row.add_child(copy_btn)
-	vbox.add_child(id_row)
-
-	var apply_btn := Button.new()
-	apply_btn.text = tr("Paste & Apply")
-	apply_btn.add_theme_font_override("font", PIXEL_FONT)
-	apply_btn.add_theme_font_size_override("font_size", 14)
-	apply_btn.custom_minimum_size = Vector2(0, 44)
-	apply_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	apply_btn.pressed.connect(_on_apply_id)
-	vbox.add_child(apply_btn)
-
-	_id_status = Label.new()
-	_id_status.add_theme_font_override("font", PIXEL_FONT)
-	_id_status.add_theme_font_size_override("font_size", 13)
-	_id_status.add_theme_color_override("font_color", Color(0.4, 0.8, 0.4))
-	_id_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_id_status.visible = false
-	vbox.add_child(_id_status)
+	# Show current device ID (read-only)
+	_id_label = Label.new()
+	_id_label.text = Auth.device_id
+	_id_label.add_theme_font_override("font", PIXEL_FONT)
+	_id_label.add_theme_font_size_override("font_size", 11)
+	_id_label.add_theme_color_override("font_color", Color(0.92, 0.88, 0.78))
+	_id_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_id_label.autowrap_mode = TextServer.AUTOWRAP_ANYWHERE
+	vbox.add_child(_id_label)
 
 	vbox.add_child(_divider())
 
@@ -353,27 +325,6 @@ func _pool_row(entry: Dictionary) -> Control:
 	row.add_child(count_lbl)
 
 	return row
-
-func _on_copy_id(btn: Button) -> void:
-	DisplayServer.clipboard_set(Auth.device_id)
-	var original := btn.text
-	btn.text = tr("Copied!")
-	await get_tree().create_timer(1.5).timeout
-	btn.text = original
-
-func _on_apply_id() -> void:
-	var new_id := _id_input.text.strip_edges()
-	if new_id.is_empty() or new_id == Auth.device_id:
-		return
-	# Save new device ID and re-register.
-	Auth.device_id = new_id
-	var file := FileAccess.open("user://device_id", FileAccess.WRITE)
-	file.store_string(new_id)
-	file.close()
-	_id_status.text = tr("Applied! Reconnecting...")
-	_id_status.visible = true
-	await Network.register()
-	await SceneTransition.iris_to("res://scenes/main_menu/main_menu.tscn")
 
 func _on_music_toggle() -> void:
 	var enabled := not AudioManager.is_music_enabled()
