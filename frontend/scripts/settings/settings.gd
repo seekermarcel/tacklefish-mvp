@@ -152,6 +152,19 @@ func _build_ui() -> void:
 
 	vbox.add_child(_divider())
 
+	# --- Statistics section ---
+	vbox.add_child(_section_label(tr("Statistics")))
+	var stats_btn := Button.new()
+	stats_btn.text = tr("Statistics")
+	stats_btn.add_theme_font_override("font", PIXEL_FONT)
+	stats_btn.add_theme_font_size_override("font_size", 18)
+	stats_btn.custom_minimum_size = Vector2(0, 56)
+	stats_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stats_btn.pressed.connect(func(): SceneTransition.iris_to("res://scenes/statistics/statistics.tscn"))
+	vbox.add_child(stats_btn)
+
+	vbox.add_child(_divider())
+
 	# --- Pool section ---
 	vbox.add_child(_section_label(tr("Check Pools")))
 	var pool_btn := Button.new()

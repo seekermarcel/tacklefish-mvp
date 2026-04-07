@@ -31,6 +31,19 @@ func _register_translations() -> void:
 	var de := Translation.new()
 	de.locale = "de"
 	var de_msgs := {
+		# Statistics
+		"Statistics": "Statistiken",
+		"Total Caught": "Gesamt gefangen",
+		"Species Collected": "Arten gesammelt",
+		"By Rarity": "Nach Seltenheit",
+		"Most Caught": "Häufigste Art",
+		"Rarest Catch": "Seltenster Fang",
+		"Most Exclusive": "Exklusivstes",
+		"Special Variants": "Spezial-Varianten",
+		"Loading stats...": "Lade Statistiken...",
+		"No fish caught yet": "Noch keine Fische gefangen",
+		"times": "mal",
+		"Edition #%d": "Edition #%d",
 		# Settings
 		"Settings": "Einstellungen",
 		"Player ID": "Spieler-ID",
