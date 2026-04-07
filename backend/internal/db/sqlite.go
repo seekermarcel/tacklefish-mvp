@@ -25,13 +25,22 @@ func Open(path string) (*sql.DB, error) {
 }
 
 // RunMigrationsFS reads all .sql files from the embedded FS and executes them in order.
+// Each migration is tracked in a _migrations table and only applied once.
 func RunMigrationsFS(database *sql.DB, migrations fs.FS) error {
+	if _, err := database.Exec(`
+		CREATE TABLE IF NOT EXISTS _migrations (
+			name       TEXT PRIMARY KEY,
+			applied_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		)
+	`); err != nil {
+		return fmt.Errorf("create migrations table: %w", err)
+	}
+
 	entries, err := fs.ReadDir(migrations, ".")
 	if err != nil {
 		return fmt.Errorf("read migrations: %w", err)
 	}
 
-	// Sort by filename to ensure order.
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].Name() < entries[j].Name()
 	})
@@ -40,14 +49,28 @@ func RunMigrationsFS(database *sql.DB, migrations fs.FS) error {
 		if entry.IsDir() {
 			continue
 		}
-		data, err := fs.ReadFile(migrations, entry.Name())
+		name := entry.Name()
+
+		var count int
+		if err := database.QueryRow(`SELECT COUNT(*) FROM _migrations WHERE name = ?`, name).Scan(&count); err != nil {
+			return fmt.Errorf("check migration %s: %w", name, err)
+		}
+		if count > 0 {
+			log.Println("skipping migration (already applied):", name)
+			continue
+		}
+
+		data, err := fs.ReadFile(migrations, name)
 		if err != nil {
-			return fmt.Errorf("read %s: %w", entry.Name(), err)
+			return fmt.Errorf("read %s: %w", name, err)
 		}
 		if _, err := database.Exec(string(data)); err != nil {
-			return fmt.Errorf("exec %s: %w", entry.Name(), err)
+			return fmt.Errorf("exec %s: %w", name, err)
 		}
-		log.Println("applied migration:", entry.Name())
+		if _, err := database.Exec(`INSERT INTO _migrations (name) VALUES (?)`, name); err != nil {
+			return fmt.Errorf("record migration %s: %w", name, err)
+		}
+		log.Println("applied migration:", name)
 	}
 
 	return nil

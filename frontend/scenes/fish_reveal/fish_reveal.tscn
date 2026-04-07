@@ -39,6 +39,7 @@ grow_vertical = 2
 alignment = 1
 
 [node name="CaughtLabel" type="Label" parent="VBox" unique_id=968147873]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.94, 0.87, 1)
 theme_override_colors/font_outline_color = Color(0.12, 0.1, 0.08, 1)

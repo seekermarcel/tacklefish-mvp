@@ -4,6 +4,7 @@ extends Control
 # Point of interest in the source image (normalized 0-1).
 # The fisher is roughly centered horizontally, ~70% down.
 const BG_FOCUS := Vector2(0.5, 0.70)
+const PIXEL_FONT := preload("res://resources/fonts/pixel.ttf")
 
 @onready var background: AnimatedSprite2D = $Background
 @onready var start_button: TextureButton = %StartButton
@@ -25,7 +26,29 @@ func _ready() -> void:
 	AudioManager.play_music()
 	AudioManager.play_sounds()
 	version_label.text = GameState.VERSION
+	_setup_settings_button()
 	_auto_register()
+
+func _setup_settings_button() -> void:
+	var btn := Button.new()
+	btn.text = tr("Settings")
+	btn.add_theme_font_override("font", PIXEL_FONT)
+	btn.add_theme_font_size_override("font_size", 14)
+	btn.custom_minimum_size = Vector2(100, 40)
+	btn.anchor_left = 1.0
+	btn.anchor_right = 1.0
+	btn.anchor_top = 0.0
+	btn.anchor_bottom = 0.0
+	btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	btn.offset_left = -116.0
+	btn.offset_right = -8.0
+	btn.offset_top = 8.0
+	btn.offset_bottom = 52.0
+	btn.pressed.connect(_on_settings_pressed)
+	add_child(btn)
+
+func _on_settings_pressed() -> void:
+	await SceneTransition.iris_to("res://scenes/settings/settings.tscn")
 
 func _fit_background() -> void:
 	var viewport_size := get_viewport_rect().size
@@ -39,13 +62,19 @@ func _fit_background() -> void:
 	background.position = offset
 
 func _auto_register() -> void:
-	status_label.text = "Connecting..."
+	# Skip network call if already registered (e.g. after language switch reload).
+	if GameState.player_id > 0:
+		status_label.text = tr("Player #%d") % GameState.player_id
+		start_button.disabled = false
+		return
+
+	status_label.text = tr("Connecting...")
 	var result := await Network.register()
 	if result.status == 200:
-		status_label.text = "Player #%d" % GameState.player_id
+		status_label.text = tr("Player #%d") % GameState.player_id
 		start_button.disabled = false
 	else:
-		status_label.text = "Connection failed. Check backend."
+		status_label.text = tr("Connection failed. Check backend.")
 
 func _on_start_pressed() -> void:
 	AudioManager.play_sfx_start_game()
