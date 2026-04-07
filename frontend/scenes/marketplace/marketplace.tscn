@@ -10,7 +10,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 script = ExtResource("1")
 
 [node name="Background" type="ColorRect" parent="."]
@@ -34,13 +33,11 @@ offset_right = -16.0
 offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 theme_override_constants/separation = 8
 
 [node name="Header" type="HBoxContainer" parent="VBox"]
 layout_mode = 2
 alignment = 1
-mouse_filter = 2
 theme_override_constants/separation = 16
 
 [node name="TitleLabel" type="Label" parent="VBox/Header"]
@@ -65,7 +62,6 @@ text = "0 Shells"
 [node name="TabBar" type="HBoxContainer" parent="VBox"]
 layout_mode = 2
 alignment = 1
-mouse_filter = 2
 theme_override_constants/separation = 40
 
 [node name="BrowseTabButton" type="Label" parent="VBox/TabBar"]
@@ -94,7 +90,6 @@ text = "My Listings"
 unique_name_in_owner = true
 layout_mode = 2
 alignment = 1
-mouse_filter = 2
 theme_override_constants/separation = 6
 
 [node name="SortButton" type="Button" parent="VBox/FilterRow"]
@@ -108,7 +103,6 @@ text = "Newest"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-mouse_filter = 2
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 0
 
