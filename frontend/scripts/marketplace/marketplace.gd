@@ -11,16 +11,15 @@ const RARITY_COLORS := {
 	"legendary": Color(1.0, 0.60, 0.0),
 }
 
-var browse_tab_button: Button
-var my_listings_tab_button: Button
-var filter_row: HBoxContainer
-var sort_button: Button
-var scroll_container: ScrollContainer
-var listings_container: VBoxContainer
-var load_more_button: Button
-var status_label: Label
-var back_button: Button
-var shells_label: Label
+var _browse_tab_btn: Button
+var _my_listings_tab_btn: Button
+var _filter_row: HBoxContainer
+var _sort_button: Button
+var _listings_container: VBoxContainer
+var _load_more_button: Button
+var _status_label: Label
+var _shells_label: Label
+var _confirm_panel: PanelContainer
 
 enum Tab { BROWSE, MY_LISTINGS }
 var _current_tab: Tab = Tab.BROWSE
@@ -28,7 +27,6 @@ var _browse_offset: int = 0
 var _browse_total: int = 0
 var _current_rarity: String = ""
 var _current_sort: String = "newest"
-var _confirm_panel: PanelContainer
 
 func _ready() -> void:
 	_build_ui()
@@ -37,132 +35,138 @@ func _ready() -> void:
 	_switch_tab(Tab.BROWSE)
 
 func _build_ui() -> void:
-	# Dark background
+	# Dark background (same as settings)
 	var bg := ColorRect.new()
-	bg.color = Color(0.1, 0.14, 0.2)
+	bg.color = Color(0.13, 0.10, 0.07)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	# Main layout
+	# Back button — top left (same as settings)
+	var back_btn := Button.new()
+	back_btn.text = tr("Back")
+	back_btn.add_theme_font_override("font", PIXEL_FONT)
+	back_btn.add_theme_font_size_override("font_size", 16)
+	back_btn.custom_minimum_size = Vector2(100, 48)
+	back_btn.position = Vector2(16, 16)
+	back_btn.pressed.connect(_on_back)
+	add_child(back_btn)
+
+	# Title (same style as settings)
+	var title := Label.new()
+	title.text = tr("Market")
+	title.add_theme_font_override("font", PIXEL_FONT)
+	title.add_theme_font_size_override("font_size", 36)
+	title.add_theme_color_override("font_color", Color(0.96, 0.94, 0.87))
+	title.add_theme_color_override("font_outline_color", Color(0.12, 0.10, 0.08))
+	title.add_theme_constant_override("outline_size", 6)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.anchor_left = 0.0
+	title.anchor_right = 1.0
+	title.offset_top = 24.0
+	title.offset_bottom = 80.0
+	add_child(title)
+
+	# Scrollable content (same as settings)
+	var scroll := ScrollContainer.new()
+	scroll.anchor_left = 0.0
+	scroll.anchor_right = 1.0
+	scroll.anchor_top = 0.0
+	scroll.anchor_bottom = 1.0
+	scroll.offset_left = 32.0
+	scroll.offset_right = -32.0
+	scroll.offset_top = 100.0
+	scroll.offset_bottom = -32.0
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(scroll)
+
 	var vbox := VBoxContainer.new()
-	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
-	vbox.offset_left = 16.0
-	vbox.offset_top = 50.0
-	vbox.offset_right = -16.0
-	vbox.offset_bottom = -40.0
-	vbox.add_theme_constant_override("separation", 8)
-	add_child(vbox)
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", 24)
+	scroll.add_child(vbox)
 
-	# Header row
-	var header := HBoxContainer.new()
-	header.alignment = BoxContainer.ALIGNMENT_CENTER
-	header.add_theme_constant_override("separation", 16)
-	vbox.add_child(header)
+	# --- Shells display ---
+	_shells_label = Label.new()
+	_shells_label.text = "0 Shells"
+	_shells_label.add_theme_font_override("font", PIXEL_FONT)
+	_shells_label.add_theme_font_size_override("font_size", 22)
+	_shells_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4))
+	_shells_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(_shells_label)
 
-	var title_label := Label.new()
-	title_label.text = "Market"
-	title_label.add_theme_color_override("font_color", Color(0.96, 0.94, 0.87))
-	title_label.add_theme_color_override("font_outline_color", Color(0.06, 0.05, 0.04))
-	title_label.add_theme_constant_override("outline_size", 8)
-	title_label.add_theme_font_override("font", PIXEL_FONT)
-	title_label.add_theme_font_size_override("font_size", 28)
-	header.add_child(title_label)
+	vbox.add_child(_divider())
 
-	shells_label = Label.new()
-	shells_label.text = "0 Shells"
-	shells_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4))
-	shells_label.add_theme_color_override("font_outline_color", Color(0.06, 0.05, 0.04))
-	shells_label.add_theme_constant_override("outline_size", 4)
-	shells_label.add_theme_font_override("font", PIXEL_FONT)
-	shells_label.add_theme_font_size_override("font_size", 20)
-	header.add_child(shells_label)
-
-	# Tab bar
+	# --- Tab bar ---
 	var tab_bar := HBoxContainer.new()
 	tab_bar.alignment = BoxContainer.ALIGNMENT_CENTER
 	tab_bar.add_theme_constant_override("separation", 40)
 	vbox.add_child(tab_bar)
 
-	browse_tab_button = Button.new()
-	browse_tab_button.text = "Browse"
-	browse_tab_button.flat = true
-	browse_tab_button.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
-	browse_tab_button.add_theme_font_override("font", PIXEL_FONT)
-	browse_tab_button.add_theme_font_size_override("font_size", 22)
-	browse_tab_button.pressed.connect(func(): _switch_tab(Tab.BROWSE))
-	tab_bar.add_child(browse_tab_button)
+	_browse_tab_btn = Button.new()
+	_browse_tab_btn.text = tr("Browse")
+	_browse_tab_btn.flat = true
+	_browse_tab_btn.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
+	_browse_tab_btn.add_theme_font_override("font", PIXEL_FONT)
+	_browse_tab_btn.add_theme_font_size_override("font_size", 22)
+	_browse_tab_btn.pressed.connect(func(): _switch_tab(Tab.BROWSE))
+	tab_bar.add_child(_browse_tab_btn)
 
-	my_listings_tab_button = Button.new()
-	my_listings_tab_button.text = "My Listings"
-	my_listings_tab_button.flat = true
-	my_listings_tab_button.add_theme_color_override("font_color", Color(0.6, 0.58, 0.52))
-	my_listings_tab_button.add_theme_font_override("font", PIXEL_FONT)
-	my_listings_tab_button.add_theme_font_size_override("font_size", 22)
-	my_listings_tab_button.pressed.connect(func(): _switch_tab(Tab.MY_LISTINGS))
-	tab_bar.add_child(my_listings_tab_button)
+	_my_listings_tab_btn = Button.new()
+	_my_listings_tab_btn.text = tr("My Listings")
+	_my_listings_tab_btn.flat = true
+	_my_listings_tab_btn.add_theme_color_override("font_color", Color(0.6, 0.58, 0.52))
+	_my_listings_tab_btn.add_theme_font_override("font", PIXEL_FONT)
+	_my_listings_tab_btn.add_theme_font_size_override("font_size", 22)
+	_my_listings_tab_btn.pressed.connect(func(): _switch_tab(Tab.MY_LISTINGS))
+	tab_bar.add_child(_my_listings_tab_btn)
 
-	# Filter row
-	filter_row = HBoxContainer.new()
-	filter_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	filter_row.add_theme_constant_override("separation", 6)
-	vbox.add_child(filter_row)
+	# --- Filter row ---
+	_filter_row = HBoxContainer.new()
+	_filter_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_filter_row.add_theme_constant_override("separation", 6)
+	vbox.add_child(_filter_row)
 
-	sort_button = Button.new()
-	sort_button.text = "Newest"
-	sort_button.add_theme_font_override("font", PIXEL_FONT)
-	sort_button.add_theme_font_size_override("font_size", 14)
-	sort_button.pressed.connect(_cycle_sort)
-	filter_row.add_child(sort_button)
+	_sort_button = Button.new()
+	_sort_button.text = tr("Newest")
+	_sort_button.add_theme_font_override("font", PIXEL_FONT)
+	_sort_button.add_theme_font_size_override("font_size", 14)
+	_sort_button.pressed.connect(_cycle_sort)
+	_filter_row.add_child(_sort_button)
 
-	# Scrollable listings
-	scroll_container = ScrollContainer.new()
-	scroll_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-	vbox.add_child(scroll_container)
+	vbox.add_child(_divider())
 
-	listings_container = VBoxContainer.new()
-	listings_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	listings_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	listings_container.add_theme_constant_override("separation", 8)
-	scroll_container.add_child(listings_container)
+	# --- Listings container ---
+	_listings_container = VBoxContainer.new()
+	_listings_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_listings_container.add_theme_constant_override("separation", 8)
+	vbox.add_child(_listings_container)
 
-	# Load more button
-	load_more_button = Button.new()
-	load_more_button.text = "Load More"
-	load_more_button.visible = false
-	load_more_button.add_theme_font_override("font", PIXEL_FONT)
-	load_more_button.add_theme_font_size_override("font_size", 18)
-	load_more_button.pressed.connect(_on_load_more)
-	vbox.add_child(load_more_button)
+	# --- Load more button ---
+	_load_more_button = Button.new()
+	_load_more_button.text = tr("Load More")
+	_load_more_button.visible = false
+	_load_more_button.add_theme_font_override("font", PIXEL_FONT)
+	_load_more_button.add_theme_font_size_override("font_size", 18)
+	_load_more_button.custom_minimum_size = Vector2(0, 56)
+	_load_more_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_load_more_button.pressed.connect(_on_load_more)
+	vbox.add_child(_load_more_button)
 
-	# Status label
-	status_label = Label.new()
-	status_label.text = "Loading..."
-	status_label.visible = false
-	status_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-	status_label.add_theme_font_override("font", PIXEL_FONT)
-	status_label.add_theme_font_size_override("font_size", 16)
-	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(status_label)
-
-	# Back button
-	back_button = Button.new()
-	back_button.text = "Back to Pond"
-	back_button.flat = true
-	back_button.add_theme_color_override("font_color", Color(0.96, 0.94, 0.87))
-	back_button.add_theme_font_override("font", PIXEL_FONT)
-	back_button.add_theme_font_size_override("font_size", 20)
-	back_button.pressed.connect(func(): SceneTransition.iris_to("res://scenes/fishing/fishing.tscn"))
-	vbox.add_child(back_button)
+	# --- Status label ---
+	_status_label = Label.new()
+	_status_label.text = tr("Loading...")
+	_status_label.visible = false
+	_status_label.add_theme_font_override("font", PIXEL_FONT)
+	_status_label.add_theme_font_size_override("font_size", 16)
+	_status_label.add_theme_color_override("font_color", Color(0.75, 0.70, 0.60))
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(_status_label)
 
 func _update_shells_display() -> void:
-	shells_label.text = "%d Shells" % GameState.shells
+	_shells_label.text = "%d Shells" % GameState.shells
 
 func _setup_rarity_filters() -> void:
-	# Remove all children except sort_button.
-	for child in filter_row.get_children():
-		if child != sort_button:
+	for child in _filter_row.get_children():
+		if child != _sort_button:
 			child.queue_free()
 
 	var rarities := ["", "common", "uncommon", "rare", "epic", "legendary"]
@@ -175,8 +179,8 @@ func _setup_rarity_filters() -> void:
 		btn.add_theme_font_override("font", PIXEL_FONT)
 		var rarity_val := rarities[i]
 		btn.pressed.connect(func(): _on_rarity_filter(rarity_val))
-		filter_row.add_child(btn)
-		filter_row.move_child(btn, filter_row.get_child_count() - 2) # before sort button
+		_filter_row.add_child(btn)
+		_filter_row.move_child(btn, _filter_row.get_child_count() - 2)
 
 func _on_rarity_filter(rarity: String) -> void:
 	_current_rarity = rarity
@@ -191,7 +195,7 @@ func _cycle_sort() -> void:
 		_: _current_sort = "newest"
 
 	var sort_labels := {"newest": "Newest", "price_asc": "Price ^", "price_desc": "Price v"}
-	sort_button.text = sort_labels.get(_current_sort, "Sort")
+	_sort_button.text = sort_labels.get(_current_sort, "Sort")
 	_browse_offset = 0
 	_clear_listings()
 	_load_browse()
@@ -203,10 +207,10 @@ func _switch_tab(tab: Tab) -> void:
 	var active_color := Color(1.0, 0.85, 0.4)
 	var inactive_color := Color(0.6, 0.58, 0.52)
 
-	browse_tab_button.add_theme_color_override("font_color", active_color if tab == Tab.BROWSE else inactive_color)
-	my_listings_tab_button.add_theme_color_override("font_color", active_color if tab == Tab.MY_LISTINGS else inactive_color)
+	_browse_tab_btn.add_theme_color_override("font_color", active_color if tab == Tab.BROWSE else inactive_color)
+	_my_listings_tab_btn.add_theme_color_override("font_color", active_color if tab == Tab.MY_LISTINGS else inactive_color)
 
-	filter_row.visible = (tab == Tab.BROWSE)
+	_filter_row.visible = (tab == Tab.BROWSE)
 
 	if tab == Tab.BROWSE:
 		_browse_offset = 0
@@ -215,21 +219,21 @@ func _switch_tab(tab: Tab) -> void:
 		_load_my_listings()
 
 func _clear_listings() -> void:
-	for child in listings_container.get_children():
+	for child in _listings_container.get_children():
 		child.queue_free()
-	load_more_button.visible = false
-	status_label.visible = false
+	_load_more_button.visible = false
+	_status_label.visible = false
 
 func _load_browse() -> void:
-	status_label.text = "Loading..."
-	status_label.visible = true
+	_status_label.text = tr("Loading...")
+	_status_label.visible = true
 
 	var result := await Network.browse_listings(PAGE_SIZE, _browse_offset, _current_rarity, _current_sort)
-	status_label.visible = false
+	_status_label.visible = false
 
 	if result.status != 200:
-		status_label.text = "Failed to load listings"
-		status_label.visible = true
+		_status_label.text = tr("Failed to load listings")
+		_status_label.visible = true
 		return
 
 	var data: Dictionary = result.data
@@ -237,33 +241,33 @@ func _load_browse() -> void:
 	_browse_total = data.get("total", 0)
 
 	if listings.is_empty() and _browse_offset == 0:
-		status_label.text = "No listings found"
-		status_label.visible = true
+		_status_label.text = tr("No listings found")
+		_status_label.visible = true
 		return
 
 	for listing in listings:
 		_add_browse_listing_row(listing)
 
 	_browse_offset += listings.size()
-	load_more_button.visible = (_browse_offset < _browse_total)
+	_load_more_button.visible = (_browse_offset < _browse_total)
 
 func _load_my_listings() -> void:
-	status_label.text = "Loading..."
-	status_label.visible = true
+	_status_label.text = tr("Loading...")
+	_status_label.visible = true
 
 	var result := await Network.my_listings()
-	status_label.visible = false
+	_status_label.visible = false
 
 	if result.status != 200:
-		status_label.text = "Failed to load listings"
-		status_label.visible = true
+		_status_label.text = tr("Failed to load listings")
+		_status_label.visible = true
 		return
 
 	var listings: Array = result.data.get("listings", [])
 
 	if listings.is_empty():
-		status_label.text = "No active listings"
-		status_label.visible = true
+		_status_label.text = tr("No active listings")
+		_status_label.visible = true
 		return
 
 	for listing in listings:
@@ -287,7 +291,7 @@ func _add_browse_listing_row(listing: Dictionary) -> void:
 	buy_btn.pressed.connect(func(): _on_buy_pressed(listing_id, price, fish_data))
 	row.add_child(buy_btn)
 
-	listings_container.add_child(row)
+	_listings_container.add_child(row)
 
 func _add_my_listing_row(listing: Dictionary) -> void:
 	var row := _create_listing_row(listing)
@@ -298,21 +302,21 @@ func _add_my_listing_row(listing: Dictionary) -> void:
 	btn_box.custom_minimum_size = Vector2(100, 0)
 
 	var edit_btn := Button.new()
-	edit_btn.text = "Edit"
+	edit_btn.text = tr("Edit")
 	edit_btn.add_theme_font_size_override("font_size", 14)
 	edit_btn.add_theme_font_override("font", PIXEL_FONT)
 	edit_btn.pressed.connect(func(): _on_edit_pressed(listing_id))
 	btn_box.add_child(edit_btn)
 
 	var cancel_btn := Button.new()
-	cancel_btn.text = "Cancel"
+	cancel_btn.text = tr("Cancel")
 	cancel_btn.add_theme_font_size_override("font_size", 14)
 	cancel_btn.add_theme_font_override("font", PIXEL_FONT)
 	cancel_btn.pressed.connect(func(): _on_cancel_pressed(listing_id))
 	btn_box.add_child(cancel_btn)
 
 	row.add_child(btn_box)
-	listings_container.add_child(row)
+	_listings_container.add_child(row)
 
 func _create_listing_row(listing: Dictionary) -> HBoxContainer:
 	var fish_data: Dictionary = listing.get("fish", {})
@@ -328,7 +332,7 @@ func _create_listing_row(listing: Dictionary) -> HBoxContainer:
 	row.custom_minimum_size = Vector2(0, 80)
 	row.add_theme_constant_override("separation", 12)
 
-	# Fish sprite.
+	# Fish sprite
 	var sprite_path := "res://resources/sprites/fish/%s.png" % species.to_lower().replace(" ", "_")
 	if not ResourceLoader.exists(sprite_path):
 		sprite_path = "res://resources/sprites/fish/fish_placeholder.png"
@@ -340,7 +344,7 @@ func _create_listing_row(listing: Dictionary) -> HBoxContainer:
 	tex_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	row.add_child(tex_rect)
 
-	# Info column.
+	# Info column
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
@@ -462,7 +466,7 @@ func _show_confirm(message: String, confirm_text: String, on_confirm: Callable) 
 	vbox.add_child(confirm_btn)
 
 	var cancel_btn := Button.new()
-	cancel_btn.text = "Cancel"
+	cancel_btn.text = tr("Cancel")
 	cancel_btn.add_theme_font_size_override("font_size", 18)
 	cancel_btn.add_theme_font_override("font", PIXEL_FONT)
 	cancel_btn.pressed.connect(_dismiss_confirm)
@@ -505,7 +509,7 @@ func _show_price_input(message: String, on_confirm: Callable) -> void:
 	vbox.add_child(spacer)
 
 	var confirm_btn := Button.new()
-	confirm_btn.text = "Confirm"
+	confirm_btn.text = tr("Confirm")
 	confirm_btn.add_theme_font_size_override("font_size", 20)
 	confirm_btn.add_theme_font_override("font", PIXEL_FONT)
 	confirm_btn.pressed.connect(func():
@@ -520,7 +524,7 @@ func _show_price_input(message: String, on_confirm: Callable) -> void:
 	vbox.add_child(confirm_btn)
 
 	var cancel_btn := Button.new()
-	cancel_btn.text = "Cancel"
+	cancel_btn.text = tr("Cancel")
 	cancel_btn.add_theme_font_size_override("font_size", 18)
 	cancel_btn.add_theme_font_override("font", PIXEL_FONT)
 	cancel_btn.pressed.connect(_dismiss_confirm)
@@ -541,6 +545,9 @@ func _show_feedback(text: String, color: Color) -> void:
 		feedback.add_theme_font_override("font", PIXEL_FONT)
 		_confirm_panel.add_child(feedback)
 
+func _on_back() -> void:
+	await SceneTransition.iris_to("res://scenes/fishing/fishing.tscn")
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		if _confirm_panel != null:
@@ -552,3 +559,12 @@ func _dismiss_confirm() -> void:
 	if _confirm_panel:
 		_confirm_panel.queue_free()
 		_confirm_panel = null
+
+# --- Helpers (same as settings) ---
+
+func _divider() -> Control:
+	var line := ColorRect.new()
+	line.color = Color(0.35, 0.28, 0.18, 0.6)
+	line.custom_minimum_size = Vector2(0, 2)
+	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return line
