@@ -1,6 +1,7 @@
 extends Control
 ## Marketplace scene with Browse and My Listings tabs.
 
+const PIXEL_FONT := preload("res://resources/fonts/pixel.ttf")
 const PAGE_SIZE := 20
 const RARITY_COLORS := {
 	"common": Color(0.62, 0.62, 0.62),
@@ -10,18 +11,16 @@ const RARITY_COLORS := {
 	"legendary": Color(1.0, 0.60, 0.0),
 }
 
-const DRAG_THRESHOLD := 12.0
-
-@onready var browse_tab_button: Label = %BrowseTabButton
-@onready var my_listings_tab_button: Label = %MyListingsTabButton
-@onready var filter_row: HBoxContainer = %FilterRow
-@onready var sort_button: Button = %SortButton
-@onready var scroll_container: ScrollContainer = %ScrollContainer
-@onready var listings_container: VBoxContainer = %ListingsContainer
-@onready var load_more_button: Button = %LoadMoreButton
-@onready var status_label: Label = %StatusLabel
-@onready var back_button: Label = %BackButton
-@onready var shells_label: Label = %ShellsLabel
+var browse_tab_button: Button
+var my_listings_tab_button: Button
+var filter_row: HBoxContainer
+var sort_button: Button
+var scroll_container: ScrollContainer
+var listings_container: VBoxContainer
+var load_more_button: Button
+var status_label: Label
+var back_button: Button
+var shells_label: Label
 
 enum Tab { BROWSE, MY_LISTINGS }
 var _current_tab: Tab = Tab.BROWSE
@@ -30,39 +29,142 @@ var _browse_total: int = 0
 var _current_rarity: String = ""
 var _current_sort: String = "newest"
 var _confirm_panel: PanelContainer
-var _touch_start: Vector2
-var _is_dragging: bool = false
 
 func _ready() -> void:
-	browse_tab_button.gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			_switch_tab(Tab.BROWSE)
-	)
-	my_listings_tab_button.gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			_switch_tab(Tab.MY_LISTINGS)
-	)
-	back_button.gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			await SceneTransition.iris_to("res://scenes/fishing/fishing.tscn")
-	)
-	load_more_button.pressed.connect(_on_load_more)
-	sort_button.pressed.connect(_cycle_sort)
-
+	_build_ui()
 	_setup_rarity_filters()
 	_update_shells_display()
 	_switch_tab(Tab.BROWSE)
+
+func _build_ui() -> void:
+	# Dark background
+	var bg := ColorRect.new()
+	bg.color = Color(0.1, 0.14, 0.2)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(bg)
+
+	# Main layout
+	var vbox := VBoxContainer.new()
+	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vbox.offset_left = 16.0
+	vbox.offset_top = 50.0
+	vbox.offset_right = -16.0
+	vbox.offset_bottom = -40.0
+	vbox.add_theme_constant_override("separation", 8)
+	add_child(vbox)
+
+	# Header row
+	var header := HBoxContainer.new()
+	header.alignment = BoxContainer.ALIGNMENT_CENTER
+	header.add_theme_constant_override("separation", 16)
+	vbox.add_child(header)
+
+	var title_label := Label.new()
+	title_label.text = "Market"
+	title_label.add_theme_color_override("font_color", Color(0.96, 0.94, 0.87))
+	title_label.add_theme_color_override("font_outline_color", Color(0.06, 0.05, 0.04))
+	title_label.add_theme_constant_override("outline_size", 8)
+	title_label.add_theme_font_override("font", PIXEL_FONT)
+	title_label.add_theme_font_size_override("font_size", 28)
+	header.add_child(title_label)
+
+	shells_label = Label.new()
+	shells_label.text = "0 Shells"
+	shells_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4))
+	shells_label.add_theme_color_override("font_outline_color", Color(0.06, 0.05, 0.04))
+	shells_label.add_theme_constant_override("outline_size", 4)
+	shells_label.add_theme_font_override("font", PIXEL_FONT)
+	shells_label.add_theme_font_size_override("font_size", 20)
+	header.add_child(shells_label)
+
+	# Tab bar
+	var tab_bar := HBoxContainer.new()
+	tab_bar.alignment = BoxContainer.ALIGNMENT_CENTER
+	tab_bar.add_theme_constant_override("separation", 40)
+	vbox.add_child(tab_bar)
+
+	browse_tab_button = Button.new()
+	browse_tab_button.text = "Browse"
+	browse_tab_button.flat = true
+	browse_tab_button.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
+	browse_tab_button.add_theme_font_override("font", PIXEL_FONT)
+	browse_tab_button.add_theme_font_size_override("font_size", 22)
+	browse_tab_button.pressed.connect(func(): _switch_tab(Tab.BROWSE))
+	tab_bar.add_child(browse_tab_button)
+
+	my_listings_tab_button = Button.new()
+	my_listings_tab_button.text = "My Listings"
+	my_listings_tab_button.flat = true
+	my_listings_tab_button.add_theme_color_override("font_color", Color(0.6, 0.58, 0.52))
+	my_listings_tab_button.add_theme_font_override("font", PIXEL_FONT)
+	my_listings_tab_button.add_theme_font_size_override("font_size", 22)
+	my_listings_tab_button.pressed.connect(func(): _switch_tab(Tab.MY_LISTINGS))
+	tab_bar.add_child(my_listings_tab_button)
+
+	# Filter row
+	filter_row = HBoxContainer.new()
+	filter_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	filter_row.add_theme_constant_override("separation", 6)
+	vbox.add_child(filter_row)
+
+	sort_button = Button.new()
+	sort_button.text = "Newest"
+	sort_button.add_theme_font_override("font", PIXEL_FONT)
+	sort_button.add_theme_font_size_override("font_size", 14)
+	sort_button.pressed.connect(_cycle_sort)
+	filter_row.add_child(sort_button)
+
+	# Scrollable listings
+	scroll_container = ScrollContainer.new()
+	scroll_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	vbox.add_child(scroll_container)
+
+	listings_container = VBoxContainer.new()
+	listings_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	listings_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	listings_container.add_theme_constant_override("separation", 8)
+	scroll_container.add_child(listings_container)
+
+	# Load more button
+	load_more_button = Button.new()
+	load_more_button.text = "Load More"
+	load_more_button.visible = false
+	load_more_button.add_theme_font_override("font", PIXEL_FONT)
+	load_more_button.add_theme_font_size_override("font_size", 18)
+	load_more_button.pressed.connect(_on_load_more)
+	vbox.add_child(load_more_button)
+
+	# Status label
+	status_label = Label.new()
+	status_label.text = "Loading..."
+	status_label.visible = false
+	status_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	status_label.add_theme_font_override("font", PIXEL_FONT)
+	status_label.add_theme_font_size_override("font_size", 16)
+	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(status_label)
+
+	# Back button
+	back_button = Button.new()
+	back_button.text = "Back to Pond"
+	back_button.flat = true
+	back_button.add_theme_color_override("font_color", Color(0.96, 0.94, 0.87))
+	back_button.add_theme_font_override("font", PIXEL_FONT)
+	back_button.add_theme_font_size_override("font_size", 20)
+	back_button.pressed.connect(func(): SceneTransition.iris_to("res://scenes/fishing/fishing.tscn"))
+	vbox.add_child(back_button)
 
 func _update_shells_display() -> void:
 	shells_label.text = "%d Shells" % GameState.shells
 
 func _setup_rarity_filters() -> void:
-	# Clear existing children.
+	# Remove all children except sort_button.
 	for child in filter_row.get_children():
 		if child != sort_button:
 			child.queue_free()
 
-	var pixel_font = load("res://resources/fonts/pixel.ttf")
 	var rarities := ["", "common", "uncommon", "rare", "epic", "legendary"]
 	var labels := ["All", "Common", "Uncommon", "Rare", "Epic", "Legendary"]
 
@@ -70,8 +172,7 @@ func _setup_rarity_filters() -> void:
 		var btn := Button.new()
 		btn.text = labels[i]
 		btn.add_theme_font_size_override("font_size", 14)
-		if pixel_font:
-			btn.add_theme_font_override("font", pixel_font)
+		btn.add_theme_font_override("font", PIXEL_FONT)
 		var rarity_val := rarities[i]
 		btn.pressed.connect(func(): _on_rarity_filter(rarity_val))
 		filter_row.add_child(btn)
@@ -181,9 +282,7 @@ func _add_browse_listing_row(listing: Dictionary) -> void:
 	var buy_btn := Button.new()
 	buy_btn.text = "Buy %d" % price
 	buy_btn.add_theme_font_size_override("font_size", 16)
-	var pixel_font = load("res://resources/fonts/pixel.ttf")
-	if pixel_font:
-		buy_btn.add_theme_font_override("font", pixel_font)
+	buy_btn.add_theme_font_override("font", PIXEL_FONT)
 	buy_btn.custom_minimum_size = Vector2(120, 40)
 	buy_btn.pressed.connect(func(): _on_buy_pressed(listing_id, price, fish_data))
 	row.add_child(buy_btn)
@@ -194,7 +293,6 @@ func _add_my_listing_row(listing: Dictionary) -> void:
 	var row := _create_listing_row(listing)
 
 	var listing_id: int = listing.get("listing_id", 0)
-	var pixel_font = load("res://resources/fonts/pixel.ttf")
 
 	var btn_box := VBoxContainer.new()
 	btn_box.custom_minimum_size = Vector2(100, 0)
@@ -202,16 +300,14 @@ func _add_my_listing_row(listing: Dictionary) -> void:
 	var edit_btn := Button.new()
 	edit_btn.text = "Edit"
 	edit_btn.add_theme_font_size_override("font_size", 14)
-	if pixel_font:
-		edit_btn.add_theme_font_override("font", pixel_font)
+	edit_btn.add_theme_font_override("font", PIXEL_FONT)
 	edit_btn.pressed.connect(func(): _on_edit_pressed(listing_id))
 	btn_box.add_child(edit_btn)
 
 	var cancel_btn := Button.new()
 	cancel_btn.text = "Cancel"
 	cancel_btn.add_theme_font_size_override("font_size", 14)
-	if pixel_font:
-		cancel_btn.add_theme_font_override("font", pixel_font)
+	cancel_btn.add_theme_font_override("font", PIXEL_FONT)
 	cancel_btn.pressed.connect(func(): _on_cancel_pressed(listing_id))
 	btn_box.add_child(cancel_btn)
 
@@ -247,30 +343,26 @@ func _create_listing_row(listing: Dictionary) -> HBoxContainer:
 	# Info column.
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var pixel_font = load("res://resources/fonts/pixel.ttf")
 
 	var name_label := Label.new()
 	name_label.text = species
 	name_label.add_theme_font_size_override("font_size", 18)
 	name_label.add_theme_color_override("font_color", RARITY_COLORS.get(rarity, Color.WHITE))
-	if pixel_font:
-		name_label.add_theme_font_override("font", pixel_font)
+	name_label.add_theme_font_override("font", PIXEL_FONT)
 	info.add_child(name_label)
 
 	var detail_label := Label.new()
 	detail_label.text = "#%d/%d  %s  %s" % [edition_num, edition_size, size_variant.capitalize(), color_variant.capitalize()]
 	detail_label.add_theme_font_size_override("font_size", 12)
 	detail_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.65))
-	if pixel_font:
-		detail_label.add_theme_font_override("font", pixel_font)
+	detail_label.add_theme_font_override("font", PIXEL_FONT)
 	info.add_child(detail_label)
 
 	var price_label := Label.new()
 	price_label.text = "%d Shells" % price
 	price_label.add_theme_font_size_override("font_size", 16)
 	price_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4))
-	if pixel_font:
-		price_label.add_theme_font_override("font", pixel_font)
+	price_label.add_theme_font_override("font", PIXEL_FONT)
 	info.add_child(price_label)
 
 	row.add_child(info)
@@ -338,7 +430,7 @@ func _do_cancel(listing_id: int) -> void:
 
 func _show_confirm(message: String, confirm_text: String, on_confirm: Callable) -> void:
 	_confirm_panel = PanelContainer.new()
-	_confirm_panel.anchors_preset = Control.PRESET_FULL_RECT
+	_confirm_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_confirm_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var stylebox := StyleBoxFlat.new()
@@ -350,15 +442,12 @@ func _show_confirm(message: String, confirm_text: String, on_confirm: Callable) 
 	vbox.set_anchors_preset(Control.PRESET_CENTER)
 	_confirm_panel.add_child(vbox)
 
-	var pixel_font = load("res://resources/fonts/pixel.ttf")
-
 	var msg := Label.new()
 	msg.text = message
 	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	msg.add_theme_font_size_override("font_size", 20)
 	msg.add_theme_color_override("font_color", Color(0.96, 0.94, 0.87))
-	if pixel_font:
-		msg.add_theme_font_override("font", pixel_font)
+	msg.add_theme_font_override("font", PIXEL_FONT)
 	vbox.add_child(msg)
 
 	var spacer := Control.new()
@@ -368,16 +457,14 @@ func _show_confirm(message: String, confirm_text: String, on_confirm: Callable) 
 	var confirm_btn := Button.new()
 	confirm_btn.text = confirm_text
 	confirm_btn.add_theme_font_size_override("font_size", 20)
-	if pixel_font:
-		confirm_btn.add_theme_font_override("font", pixel_font)
+	confirm_btn.add_theme_font_override("font", PIXEL_FONT)
 	confirm_btn.pressed.connect(on_confirm)
 	vbox.add_child(confirm_btn)
 
 	var cancel_btn := Button.new()
 	cancel_btn.text = "Cancel"
 	cancel_btn.add_theme_font_size_override("font_size", 18)
-	if pixel_font:
-		cancel_btn.add_theme_font_override("font", pixel_font)
+	cancel_btn.add_theme_font_override("font", PIXEL_FONT)
 	cancel_btn.pressed.connect(_dismiss_confirm)
 	vbox.add_child(cancel_btn)
 
@@ -385,7 +472,7 @@ func _show_confirm(message: String, confirm_text: String, on_confirm: Callable) 
 
 func _show_price_input(message: String, on_confirm: Callable) -> void:
 	_confirm_panel = PanelContainer.new()
-	_confirm_panel.anchors_preset = Control.PRESET_FULL_RECT
+	_confirm_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_confirm_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var stylebox := StyleBoxFlat.new()
@@ -397,23 +484,19 @@ func _show_price_input(message: String, on_confirm: Callable) -> void:
 	vbox.set_anchors_preset(Control.PRESET_CENTER)
 	_confirm_panel.add_child(vbox)
 
-	var pixel_font = load("res://resources/fonts/pixel.ttf")
-
 	var msg := Label.new()
 	msg.text = message
 	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	msg.add_theme_font_size_override("font_size", 20)
 	msg.add_theme_color_override("font_color", Color(0.96, 0.94, 0.87))
-	if pixel_font:
-		msg.add_theme_font_override("font", pixel_font)
+	msg.add_theme_font_override("font", PIXEL_FONT)
 	vbox.add_child(msg)
 
 	var price_input := LineEdit.new()
 	price_input.placeholder_text = "1 - 99999"
 	price_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	price_input.add_theme_font_size_override("font_size", 22)
-	if pixel_font:
-		price_input.add_theme_font_override("font", pixel_font)
+	price_input.add_theme_font_override("font", PIXEL_FONT)
 	price_input.custom_minimum_size = Vector2(200, 40)
 	vbox.add_child(price_input)
 
@@ -424,8 +507,7 @@ func _show_price_input(message: String, on_confirm: Callable) -> void:
 	var confirm_btn := Button.new()
 	confirm_btn.text = "Confirm"
 	confirm_btn.add_theme_font_size_override("font_size", 20)
-	if pixel_font:
-		confirm_btn.add_theme_font_override("font", pixel_font)
+	confirm_btn.add_theme_font_override("font", PIXEL_FONT)
 	confirm_btn.pressed.connect(func():
 		var price_text: String = price_input.text.strip_edges()
 		if not price_text.is_valid_int():
@@ -440,8 +522,7 @@ func _show_price_input(message: String, on_confirm: Callable) -> void:
 	var cancel_btn := Button.new()
 	cancel_btn.text = "Cancel"
 	cancel_btn.add_theme_font_size_override("font_size", 18)
-	if pixel_font:
-		cancel_btn.add_theme_font_override("font", pixel_font)
+	cancel_btn.add_theme_font_override("font", PIXEL_FONT)
 	cancel_btn.pressed.connect(_dismiss_confirm)
 	vbox.add_child(cancel_btn)
 
@@ -457,21 +538,8 @@ func _show_feedback(text: String, color: Color) -> void:
 		feedback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		feedback.add_theme_font_size_override("font_size", 28)
 		feedback.add_theme_color_override("font_color", color)
-		var pixel_font = load("res://resources/fonts/pixel.ttf")
-		if pixel_font:
-			feedback.add_theme_font_override("font", pixel_font)
+		feedback.add_theme_font_override("font", PIXEL_FONT)
 		_confirm_panel.add_child(feedback)
-
-func _input(event: InputEvent) -> void:
-	if event is InputEventScreenTouch:
-		if event.pressed:
-			_touch_start = event.position
-			_is_dragging = false
-	elif event is InputEventScreenDrag:
-		if not _is_dragging and event.position.distance_to(_touch_start) > DRAG_THRESHOLD:
-			_is_dragging = true
-		if _is_dragging:
-			scroll_container.scroll_vertical -= int(event.relative.y)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
